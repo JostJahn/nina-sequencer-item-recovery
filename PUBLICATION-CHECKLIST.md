@@ -1,7 +1,7 @@
 # Sequencer Item Recovery — publication checklist
 
-Status: public source repository created and source pushed to `main`. No
-GitHub Release or N.I.N.A. manifest pull request has been created.
+Status: public source repository and GitHub Release `v0.1.11.0` published.
+No N.I.N.A. manifest pull request has been created.
 
 Local Git repository: branch `main`. Public remote:
 `https://github.com/JostJahn/nina-sequencer-item-recovery`.
@@ -26,6 +26,10 @@ Local Git repository: branch `main`. Public remote:
 - Chosen public repository: `JostJahn/nina-sequencer-item-recovery`.
 - Local manifest draft: `release/manifest.template.json`.
 - Human review record: `release/HUMAN-REVIEW-RECORD.md`.
+- Published release:
+  `https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.11.0`.
+- Published ZIP SHA-256:
+  `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`.
 
 ## Maintainer decisions
 
@@ -59,7 +63,9 @@ Local Git repository: branch `main`. Public remote:
   commit `efdb784`.
 - [x] Immutable local ZIP created, its contents and SHA-256 reviewed, and its
   exact DLL smoke-tested in N.I.N.A. 3.2.0.9001 by Jost Jahn.
-- [ ] Create immutable tag `v0.1.11.0` and publish the approved GitHub Release.
+- [x] Immutable tag `v0.1.11.0` and approved GitHub Release published. The
+  publicly downloaded ZIP was verified byte for byte against the approved
+  artifact on 2026-09-13.
 - [ ] Generate and validate the final N.I.N.A. manifest from that release.
 - [ ] Submit the manifest to the official repository in a pull request.
 
