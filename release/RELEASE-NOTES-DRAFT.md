@@ -1,7 +1,6 @@
 # Sequencer Item Recovery 0.1.11.0 — draft release notes
 
-Status: not published. Jost Jahn must complete the human-review record before
-this text is used for a public release.
+Status: reviewed release candidate; not published yet.
 
 ## Highlights
 
@@ -25,10 +24,22 @@ this text is used for a public release.
 ## Package
 
 - File: `SequencerItemRecovery.zip`
-- SHA-256: pending final clean-checkout package
+- SHA-256:
+  `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`
 - Minimum N.I.N.A. version: `3.2.0.9001`
 
-## Human-maintainer statement — add only after review
+## Manual verification
+
+- Jost Jahn reviewed the source, dependencies, licence, provenance, package
+  contents and checksums on 2026-09-13.
+- The exact DLL extracted from the approved ZIP was installed with N.I.N.A.
+  closed and loaded successfully in N.I.N.A. 3.2.0.9001.
+- Manual checks covered loaded and unsaved sequences, one and multiple removed
+  instructions, restoration of a complete block, safe restoration while the
+  sequence was paused, reopening the panel, and the stale-row regression.
+- The final artifact smoke test restored the removed `'Dusk'` instruction.
+
+## Human-maintainer statement
 
 Jost Jahn has reviewed the source, dependencies, licence, provenance and
 release artifact; performed and recorded the manual N.I.N.A. tests; and is the

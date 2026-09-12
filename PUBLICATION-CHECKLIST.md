@@ -52,6 +52,17 @@ Local Git repository: branch `main`. Public remote:
 7. Record the N.I.N.A. test version and visible manual smoke test in the
    release notes.
 
+## Current progress
+
+- [x] Public source repository created and reviewed source pushed.
+- [x] Release configuration restored, tested and built from clean public
+  commit `efdb784`.
+- [x] Immutable local ZIP created, its contents and SHA-256 reviewed, and its
+  exact DLL smoke-tested in N.I.N.A. 3.2.0.9001 by Jost Jahn.
+- [ ] Create immutable tag `v0.1.11.0` and publish the approved GitHub Release.
+- [ ] Generate and validate the final N.I.N.A. manifest from that release.
+- [ ] Submit the manifest to the official repository in a pull request.
+
 ## Required human release check
 
 Jost Jahn performs and records this check before creating the public release:

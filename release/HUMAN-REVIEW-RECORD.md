@@ -1,7 +1,7 @@
 # Human review record — Sequencer Item Recovery 0.1.11.0
 
-Status: pending Jost Jahn's manual review. This record must not be marked
-complete from automated tests alone.
+Status: completed by Jost Jahn. Automated tests were supplemented by the
+manual N.I.N.A. checks recorded below.
 
 ## Automated evidence already available
 
@@ -19,7 +19,8 @@ complete from automated tests alone.
   leaving a stale recovery row that can create a duplicate on a second click.
 - The N.I.N.A. 3.2.0.9001 log records that version `0.1.11.0` loaded
   successfully on 2026-09-12.
-- A release ZIP for this candidate has not been staged yet.
+- The immutable local release candidate was staged from clean public commit
+  `efdb784`; its ZIP SHA-256 is recorded below.
 - N.I.N.A. loader evidence and manual checks must be recorded for 0.1.11.0;
   results from prior candidates do not sign off this change.
 
@@ -57,12 +58,19 @@ complete from automated tests alone.
   support with drafting, structure, spelling, translation, formatting,
   comments and documentation; it does not transfer responsibility from
   Jost Jahn.
-- [ ] The final release package contents and SHA-256 value were personally
-  reviewed after producing the immutable release candidate.
+- [x] Verified by Jost Jahn on 2026-09-13: the final release package contains
+  only `SequencerItemRecovery.dll`. The approved ZIP SHA-256 is
+  `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`.
+- [x] Verified by Jost Jahn on 2026-09-13: the DLL extracted from the approved
+  ZIP was installed with N.I.N.A. closed and its SHA-256 was verified as
+  `27347E3D7A455C7AF983BE7CC64674668F0A6ADD800857023CCC94643626733C`,
+  N.I.N.A. loaded it successfully, and a final removal and `'Restore'` smoke
+  test restored the `'Dusk'` instruction with this exact artifact.
 
 ## Sign-off
 
 - Reviewer: Jost Jahn
-- Review date: ____________________
+- Review date: 2026-09-13
 - N.I.N.A. version: 3.2.0.9001
-- Result / notes: ____________________
+- Result / notes: Passed. Technical and human review is complete; publication
+  still requires Jost Jahn's separate explicit approval.
