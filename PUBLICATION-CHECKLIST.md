@@ -1,7 +1,7 @@
 # Sequencer Item Recovery — publication checklist
 
-Status: public source repository authorised and being created. No GitHub
-Release or N.I.N.A. manifest pull request has been created.
+Status: public source repository created and source pushed to `main`. No
+GitHub Release or N.I.N.A. manifest pull request has been created.
 
 Local Git repository: branch `main`. Public remote:
 `https://github.com/JostJahn/nina-sequencer-item-recovery`.
