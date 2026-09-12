@@ -1,7 +1,8 @@
 # Sequencer Item Recovery — publication checklist
 
 Status: public source repository and GitHub Release `v0.1.11.0` published.
-No N.I.N.A. manifest pull request has been created.
+The N.I.N.A. manifest was submitted in pull request `#690` and is awaiting
+the repository maintainers' workflow approval and review.
 
 Local Git repository: branch `main`. Public remote:
 `https://github.com/JostJahn/nina-sequencer-item-recovery`.
@@ -24,7 +25,7 @@ Local Git repository: branch `main`. Public remote:
 - Licence: `MPL-2.0`, confirmed by Jost Jahn on 2026-09-12. The complete
   licence text is in `LICENSE`.
 - Chosen public repository: `JostJahn/nina-sequencer-item-recovery`.
-- Local manifest draft: `release/manifest.template.json`.
+- Submitted manifest source: `release/manifest.template.json`.
 - Human review record: `release/HUMAN-REVIEW-RECORD.md`.
 - Published release:
   `https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.11.0`.
@@ -66,8 +67,10 @@ Local Git repository: branch `main`. Public remote:
 - [x] Immutable tag `v0.1.11.0` and approved GitHub Release published. The
   publicly downloaded ZIP was verified byte for byte against the approved
   artifact on 2026-09-13.
-- [ ] Generate and validate the final N.I.N.A. manifest from that release.
-- [ ] Submit the manifest to the official repository in a pull request.
+- [x] Final N.I.N.A. manifest generated and validated with both official
+  validation scripts.
+- [x] Manifest submitted to the official repository in pull request
+  `https://github.com/isbeorn/nina.plugin.manifests/pull/690`.
 
 ## Required human release check
 

@@ -27,8 +27,8 @@
     "Build": 9001
   },
   "Descriptions": {
-    "ShortDescription": "Restores recently removed Advanced Sequencer instructions and blocks.",
-    "LongDescription": "Sequencer Item Recovery is a short-term recovery tool for accidental Advanced Sequencer deletions. It compares the current open sequence with its loaded JSON or working in-memory baseline and lists only removed instructions or blocks. Each row can restore the complete item at its original position. It is not a full undo history or an automatic backup."
+    "ShortDescription": "Lists recently removed Advanced Sequencer items and restores one item.",
+    "LongDescription": "Sequencer Item Recovery is a short-term recovery tool for accidental Advanced Sequencer deletions. Open the Imaging workspace and enable the Sequencer Item Recovery tool to see recently removed instructions or blocks from the loaded or unsaved sequence still being edited. Each row has a visible 'Restore' button that reinserts the complete item at its position. Sequencer Item Recovery is not a full undo history or automatic backup."
   },
   "Installer": {
     "URL": "https://github.com/JostJahn/nina-sequencer-item-recovery/releases/download/v0.1.11.0/SequencerItemRecovery.zip",

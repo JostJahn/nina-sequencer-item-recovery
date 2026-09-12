@@ -6,6 +6,7 @@ TestResults/
 cache/
 output/
 logs/
+publication/
 release/archive/
 release/*.zip
 release/*.zip.sha256
