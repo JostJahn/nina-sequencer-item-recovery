@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- N.I.N.A. 3.2 is a Windows desktop application built on .NET 8. -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <!-- The internal code namespace is kept stable; the DLL name is public. -->
+    <RootNamespace>NinaSequenceDiff</RootNamespace>
+    <AssemblyName>SequencerItemRecovery</AssemblyName>
+    <!--
+      AssemblyInfo.cs keeps the N.I.N.A. plugin metadata in one visible place.
+    -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- These package versions deliberately match the N.I.N.A. API against
+         which the plugin is built and manually tested. -->
+    <PackageReference Include="NINA.Plugin" Version="3.2.0.9001" />
+    <PackageReference Include="NINA.Sequencer" Version="3.2.0.9001" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,271 @@
+<ResourceDictionary
+    x:Class="NinaSequenceDiff.SequenceDiffDockableTemplates"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:NinaSequenceDiff">
+
+    <!--
+      N.I.N.A. looks for this exact key to display the plugin's Options help.
+      The source is intentionally one normal, indented column; the three
+      columns below are the visible recovery table, not a source-code layout.
+    -->
+    <DataTemplate x:Key="Sequencer Item Recovery_Options">
+        <ScrollViewer
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8" MaxWidth="1000">
+                <TextBlock
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Text="Sequencer Item Recovery help" />
+                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap">
+                    Sequencer Item Recovery is a short-term recovery tool for
+                    the Advanced Sequencer. It helps you notice an accidental
+                    deletion soon after it happens and restore the item while
+                    the sequence is still open. It is not a full undo history
+                    or an automatic backup.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="Where to find Sequencer Item Recovery" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    First load or create a sequence in the Advanced Sequencer.
+                    Then select Imaging in N.I.N.A.'s main navigation.
+                    Sequencer Item Recovery is a tool panel: its four-square
+                    icon is in the Tools group at the upper-right edge of the
+                    Imaging workspace. Click that icon to show or hide
+                    Sequencer Item Recovery; it remains there after the panel
+                    is closed. Its position is saved with the active N.I.N.A.
+                    profile, so the panel may be docked, floating, or on a
+                    different edge of the Imaging workspace.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="What Sequencer Item Recovery watches" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    For a loaded sequence, Sequencer Item Recovery uses the
+                    loaded JSON file as its baseline. It also watches the open
+                    sequence automatically about once per second, even while
+                    this panel is hidden. It lists only instructions or blocks
+                    removed from the current Advanced Sequencer tree. For a
+                    new sequence without a saved file, this automatic working
+                    snapshot follows normal additions until a deletion is
+                    detected. Thus you can compose a new sequence, delete an
+                    item by mistake, and restore it without first clicking
+                    'Compare now'. Added items, changed settings, conditions,
+                    and triggers are not otherwise shown. 'Compare now' only
+                    requests an immediate check. It does not change the
+                    baseline or discard an existing 'Restore' row; a row stays
+                    while its item is still missing. With no rows, it simply
+                    performs the automatic check immediately.
+                </TextBlock>
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    'Use current sequence as baseline' accepts the state now on
+                    screen as the new fixed reference and clears every current
+                    'Restore' row. Use it only after intentional edits and only
+                    when nothing still needs restoring. If no rows are shown,
+                    it starts a new reference for future comparisons; it does
+                    not create a separate backup or history.
+                </TextBlock>
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    Additions and deletions are watched immediately, so a new
+                    instruction does not need to remain in place for two
+                    seconds before it can be recovered. A once-per-second
+                    background check also follows changes to item settings;
+                    no 'Compare now' click is needed.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="Reading the removed-instructions list" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    Removed at is the local time when Sequencer Item Recovery
+                    first detected the deletion, in yyyy-MM-dd HH:mm:ss form.
+                    Newest deletions appear first. Instruction uses the same
+                    item name shown in the Advanced Sequencer and adds its
+                    most useful settings, such as exposure time and filter.
+                    The list contains no JSON, internal type names, hover
+                    text, or right-click actions. Click a column heading to
+                    sort it.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="Restoring an item" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    Click 'Restore' in the row for the deleted item. Sequencer
+                    Item Recovery inserts that item at its original position
+                    in the in-memory Advanced Sequencer. Then inspect the
+                    result in the Sequencer and save normally in N.I.N.A. if
+                    you want to keep it. Once the item is restored, its row
+                    disappears because it is no longer removed. Restoring one
+                    item does not discard other still-visible 'Restore' rows.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="Restoring during a run" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    If an instruction was removed while the Advanced Sequence
+                    is running, use N.I.N.A.'s 'Pause' control at the
+                    lower-right first. Do not cancel the sequence. After it
+                    has paused, click 'Restore' for the removed item and
+                    confirm the safety prompt. Sequencer Item Recovery cannot
+                    read N.I.N.A.'s pause state, so it requires this explicit
+                    confirmation before changing a running sequence. Check the
+                    restored item, then use N.I.N.A.'s resume control to
+                    continue from the paused sequence. Save normally afterwards
+                    if you want the repair kept in the sequence file.
+                </TextBlock>
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Text="Important limit" />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    Sequencer Item Recovery can restore only a deletion
+                    detected while this sequence remains open and compared
+                    with its baseline. A deletion that has already been saved,
+                    or a sequence closed before Sequencer Item Recovery
+                    detected it, needs an earlier JSON file or Windows File
+                    History.
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!--
+      This is the dockable Imaging panel. The visible grid deliberately has
+      three columns: when the deletion was seen, what disappeared, and the
+      one action that can put the item back.
+    -->
+    <DataTemplate x:Key="NinaSequenceDiff.SequenceDiffDockableVM_Dockable">
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal">
+                <Button
+                    Margin="0,0,8,0"
+                    Padding="8,3"
+                    Command="{Binding RefreshCommand}"
+                    Content="Compare now" />
+                <Button
+                    Padding="8,3"
+                    Command="{Binding SetBaselineCommand}"
+                    Content="Use current sequence as baseline" />
+            </StackPanel>
+
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,8,0,0"
+                Foreground="Gray"
+                TextWrapping="Wrap">
+                Sequencer Item Recovery is a short-term recovery tool. It
+                watches Advanced Sequencer items automatically and shows any
+                removed item in time for it to be restored before saving.
+            </TextBlock>
+            <TextBlock
+                Grid.Row="2"
+                Margin="0,8,0,0"
+                FontWeight="SemiBold"
+                Text="{Binding StatusText}"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Grid.Row="3"
+                Margin="0,4,0,8"
+                Foreground="Gray"
+                Text="{Binding BaselineText}"
+                TextTrimming="CharacterEllipsis" />
+
+            <!--
+              The grid is read-only: recovery happens only through the visible
+              Restore button. Sorting is enabled for its data columns, and the
+              default order is set in the view model to newest deletion first.
+            -->
+            <DataGrid
+                Grid.Row="4"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserSortColumns="True"
+                HeadersVisibility="Column"
+                IsReadOnly="True"
+                ItemsSource="{Binding RemovedItemView}"
+                SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn
+                        Width="152"
+                        MinWidth="152"
+                        MaxWidth="152"
+                        Header="Removed at"
+                        SortMemberPath="ChangedAt">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock
+                                    Text="{Binding ChangedAtText}"
+                                    TextAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="*"
+                        MinWidth="280"
+                        Header="Instruction"
+                        SortMemberPath="InstructionText">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,3">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Text="{Binding InstructionText}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Margin="0,3,0,0"
+                                        Foreground="Gray"
+                                        Text="{Binding InstructionDetails}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="90"
+                        MinWidth="90"
+                        MaxWidth="90"
+                        Header="Action"
+                        CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button
+                                    MinWidth="70"
+                                    Padding="8,3"
+                                    Command="{Binding RestoreCommand}"
+                                    Content="Restore" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

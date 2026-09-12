@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sequencer Item Recovery for N.I.N.A. — Quick help</title>
+  <link rel="icon" href="assets/recycle-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-page="quick-help">
+  <header id="site-header"></header>
+  <div class="page-layout">
+    <aside class="sidebar"><nav id="site-nav" aria-label="Product navigation"></nav></aside>
+    <main class="content">
+      <section class="hero">
+        <p class="eyebrow">Quick help</p>
+        <h1>Notice. Restore. Continue.</h1>
+        <p class="lead">The normal workflow takes only a few seconds when a Sequencer instruction or block was deleted by mistake.</p>
+      </section>
+      <section class="panel">
+        <h2>Where Sequencer Item Recovery is</h2>
+        <p>Load or create a sequence in N.I.N.A.'s Advanced Sequencer. Open <strong>Imaging</strong>, then click Sequencer Item Recovery's four-square icon in the upper-right Tools group. Closing the panel does not remove the icon; click the same icon to show Sequencer Item Recovery again.</p>
+      </section>
+      <section class="panel">
+        <h2>Normal recovery</h2>
+        <ol class="steps">
+          <li><strong>Find the deleted item.</strong><p>Sequencer Item Recovery lists recently removed instructions and blocks. The newest deletion is at the top. The Instruction column uses the same name and useful settings shown in the Sequencer.</p></li>
+          <li><strong>Restore it.</strong><p>Click <strong>'Restore'</strong> in that row. The item is inserted back at its original position in the in-memory Advanced Sequencer.</p></li>
+          <li><strong>Check and save.</strong><p>Review the restored item in N.I.N.A.'s Sequencer. Save the sequence normally if the repair should also be kept in its JSON file.</p></li>
+        </ol>
+      </section>
+      <section class="panel">
+        <h2>New unsaved sequences</h2>
+        <p>Sequencer Item Recovery watches additions and deletions immediately; you do not need to click <strong>'Compare now'</strong> or wait two seconds before deleting a newly added instruction. A background check also follows changes to item settings about once per second.</p>
+      </section>
+      <section class="panel">
+        <h2>What the two panel buttons do</h2>
+        <p><strong>'Compare now'</strong> performs the automatic check
+        immediately. It does not change the baseline and does not discard an
+        existing <strong>'Restore'</strong> row. With no rows, it is simply an
+        immediate check.</p>
+        <p><strong>'Use current sequence as baseline'</strong> accepts what is
+        currently on screen as the new reference and clears every visible
+        <strong>'Restore'</strong> row. Use it only after intentional edits and
+        only when nothing still needs restoring. With no rows, it starts a new
+        reference for future comparisons; it is not a backup or undo history.</p>
+      </section>
+      <section class="panel">
+        <h2>Recovery while a sequence is paused</h2>
+        <p>Use N.I.N.A.'s lower-right <strong>'Pause'</strong> control first. Do not cancel the sequence. Then click <strong>'Restore'</strong> in Sequencer Item Recovery and confirm the safety message. Sequencer Item Recovery cannot inspect N.I.N.A.'s pause state, so it asks for your explicit confirmation. Check the result and use N.I.N.A.'s resume control to continue from the pause.</p>
+      </section>
+      <section class="panel">
+        <h2>Important limit</h2>
+        <p>Sequencer Item Recovery compares the open sequence with the last loaded sequence. It can help only while that sequence is still open and the deletion has been detected. It is not a replacement for saving versions or keeping backups. For a saved or closed sequence, use an earlier JSON file or Windows File History.</p>
+        <p>Need more context? Read the <a href="detailed-guide.html">detailed guide</a>.</p>
+      </section>
+    </main>
+  </div>
+  <footer id="site-footer"></footer>
+  <script src="assets/site.js"></script>
+</body>
+</html>

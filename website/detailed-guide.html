@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sequencer Item Recovery for N.I.N.A. — Detailed guide</title>
+  <link rel="icon" href="assets/recycle-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-page="detailed-guide">
+  <header id="site-header"></header>
+  <div class="page-layout">
+    <aside class="sidebar"><nav id="site-nav" aria-label="Product navigation"></nav></aside>
+    <main class="content">
+      <section class="hero">
+        <p class="eyebrow">Detailed guide</p>
+        <h1>A careful recovery guide for the Advanced Sequencer.</h1>
+        <p class="lead">This guide explains what Sequencer Item Recovery watches, what each message means, and how to safely put a deleted instruction or block back into a sequence.</p>
+      </section>
+      <section class="panel">
+        <h2>1. The problem Sequencer Item Recovery solves</h2>
+        <p>An Advanced Sequencer is a tree: it can contain individual instructions such as an exposure, a dither or a wait; it can also contain larger blocks that hold several instructions. Deleting one row can therefore remove more than expected. Sequencer Item Recovery keeps the version that was loaded when the sequence was opened as a comparison baseline. It then watches the currently edited tree about once per second.</p>
+        <p>When a complete instruction or block disappears, Sequencer Item Recovery records it in its own list. It does not change the sequence by itself. That is why it can be used as a recovery aid without silently undoing intentional work.</p>
+      </section>
+      <section class="panel">
+        <h2>2. Open the Sequencer Item Recovery panel</h2>
+        <ol class="steps">
+          <li><strong>Open the correct sequence.</strong><p>In N.I.N.A., open <strong>Sequencer</strong>, choose the Advanced Sequencer and load or create the sequence you are editing.</p></li>
+          <li><strong>Move to Imaging.</strong><p>Select <strong>Imaging</strong> in N.I.N.A.'s main navigation. Sequencer Item Recovery is an Imaging tool rather than a page in the main navigation.</p></li>
+          <li><strong>Show Sequencer Item Recovery.</strong><p>At the upper-right edge of the Imaging workspace, find the Tools group and click Sequencer Item Recovery's four-square icon. You can dock, float or resize the panel like other N.I.N.A. tools.</p></li>
+          <li><strong>Find it again later.</strong><p>If you close the panel, the icon remains in the Tools group. Click it again to reopen Sequencer Item Recovery. The docking position is stored in the active N.I.N.A. profile.</p></li>
+        </ol>
+      </section>
+      <section class="panel">
+        <h2>3. Read the panel</h2>
+        <table class="comparison">
+          <thead><tr><th title="The local time at which Sequencer Item Recovery first detected this deletion; newest entries are shown first by default.">Column</th><th title="How to use the information in this column.">Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Removed at</td><td>The local date and time when Sequencer Item Recovery first saw the item missing, shown as <code>yyyy-MM-dd HH:mm:ss</code>.</td></tr>
+            <tr><td>Instruction</td><td>The visible Sequencer name plus useful settings, such as exposure time or filter. It deliberately does not show JSON or internal type names.</td></tr>
+            <tr><td>Action</td><td>The <strong>'Restore'</strong> button for that one deleted item.</td></tr>
+          </tbody>
+        </table>
+        <p>Click a column heading when you want a different order. By default, the newest deletion is first. A row disappears after a successful restore because the item is no longer missing.</p>
+      </section>
+      <section class="panel">
+        <h2>New, unsaved sequences</h2>
+        <p>Sequencer Item Recovery watches additions and deletions in the open Advanced Sequencer immediately, even while its Imaging panel is closed. You do not need to click <strong>'Compare now'</strong> or wait two seconds before deleting a newly added instruction. A background check also follows changes to item settings about once per second.</p>
+      </section>
+      <section class="panel">
+        <h2>4. Restore an item when the sequence is not running</h2>
+        <ol class="steps">
+          <li><strong>Identify the row.</strong><p>Use the name, settings and time to make sure that the row is the instruction or block you intended to recover.</p></li>
+          <li><strong>Click 'Restore'.</strong><p>Sequencer Item Recovery recreates the item from the complete sequence that was loaded and inserts a new copy at its original position in the current Sequencer tree.</p></li>
+          <li><strong>Inspect the Sequencer.</strong><p>Look at the restored item in the Advanced Sequencer. For a block, expand it and inspect its contained instructions as well.</p></li>
+          <li><strong>Save intentionally.</strong><p>Sequencer Item Recovery works in memory. Use N.I.N.A.'s normal save command when the restored state should be written to the sequence JSON file.</p></li>
+        </ol>
+      </section>
+      <section class="panel">
+        <h2>5. Restore an item while the sequence is running</h2>
+        <p>This workflow is for a deletion noticed during an active run. It preserves the sequence position by pausing rather than cancelling.</p>
+        <ol class="steps">
+          <li><strong>Pause N.I.N.A.</strong><p>Use N.I.N.A.'s <strong>'Pause'</strong> control at the lower-right. Do not use a cancel or abort control. Wait until you can see that N.I.N.A. is paused.</p></li>
+          <li><strong>Open Sequencer Item Recovery.</strong><p>If necessary, go to Imaging and use the four-square Sequencer Item Recovery icon in the Tools group.</p></li>
+          <li><strong>Click 'Restore'.</strong><p>Select the row for the deleted item and click <strong>'Restore'</strong>. Because N.I.N.A. does not expose its pause state to Sequencer Item Recovery, Sequencer Item Recovery asks you to confirm that the lower-right <strong>'Pause'</strong> control has already paused the sequence.</p></li>
+          <li><strong>Confirm only when paused.</strong><p>Choose Yes only after confirming the pause in N.I.N.A. Choosing No leaves the sequence unchanged.</p></li>
+          <li><strong>Review, then continue.</strong><p>Check the restored item in the Sequencer. Use N.I.N.A.'s resume control to continue from the pause. Save normally after the sequence if the repaired sequence should be retained on disk.</p></li>
+        </ol>
+        <p class="notice">The confirmation is deliberately explicit. Sequencer Item Recovery never tries to guess whether a physical imaging operation has stopped safely.</p>
+      </section>
+      <section class="panel">
+        <h2>6. Buttons and status messages</h2>
+        <p><strong>'Compare now'</strong> refreshes the comparison immediately.
+        Sequencer Item Recovery normally refreshes automatically about once per
+        second, so this is useful when you have just changed the Sequencer and
+        want an instant check. It never changes the baseline and never clears a
+        visible <strong>'Restore'</strong> row. A row remains available while its
+        item is still missing. If no rows are shown, the button only performs
+        that same automatic check immediately.</p>
+        <p><strong>'Use current sequence as baseline'</strong> accepts the
+        sequence currently on screen as the new fixed reference. It clears every
+        visible <strong>'Restore'</strong> row, including rows you may otherwise
+        still have restored later. Therefore use it only after intentional edits
+        and only when no recovery is still wanted. If no rows are shown, it
+        starts the reference for later comparisons; it does not preserve a
+        separate history or create a backup.</p>
+        <p>Restoring one row does not discard other still-visible
+        <strong>'Restore'</strong> rows. Each remaining row can be restored
+        separately.</p>
+        <p>If the status says that Sequencer Item Recovery is inactive, open an Advanced Sequencer sequence. No camera connection and no running sequence are required for Sequencer Item Recovery to become active.</p>
+      </section>
+      <section class="panel">
+        <h2>7. Limits and good habits</h2>
+        <p>Sequencer Item Recovery is deliberately narrow: it restores recently deleted instructions and blocks from the sequence that is still open. It does not provide unlimited undo, restore an already saved deletion after the sequence has been closed, or replace backups.</p>
+        <p>For important imaging plans, save a named copy before broad edits. If a deletion happened earlier, use an earlier JSON sequence file or Windows File History. Sequencer Item Recovery is best for the moment when you notice the mistake and want to keep the rest of the current work.</p>
+      </section>
+    </main>
+  </div>
+  <footer id="site-footer"></footer>
+  <script src="assets/site.js"></script>
+</body>
+</html>

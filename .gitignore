@@ -1,0 +1,14 @@
+bin/
+obj/
+*_wpftmp.csproj
+TestResults/
+.playwright-cli/
+cache/
+output/
+logs/
+release/archive/
+release/*.zip
+release/*.zip.sha256
+website/downloads/*.zip
+website/downloads/*.sha256
+backcodex.bat

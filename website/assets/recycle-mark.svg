@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Sequencer Item Recovery</title>
+  <desc id="desc">Four blue squares arranged as a recovery mark.</desc>
+  <rect width="128" height="128" rx="28" fill="#102a3a"/>
+  <path d="M23 23h35v35H23zm47 0h35v35H70zM23 70h35v35H23zm47 0h35v35H70z" fill="#3b8ed1"/>
+  <path d="M64 41v46M41 64h46" stroke="#dff1ff" stroke-width="7" stroke-linecap="round" opacity=".86"/>
+</svg>
