@@ -1,6 +1,7 @@
 # Sequencer Item Recovery — publication checklist
 
-Status: public source repository and GitHub Release `v0.1.11.0` published.
+Status: public source repository and GitHub Release `v0.1.11.0` published;
+release `v0.1.12.0` approved and ready to publish.
 The N.I.N.A. manifest was submitted in pull request `#690` and is awaiting
 the repository maintainers' workflow approval and review.
 
@@ -19,7 +20,7 @@ Local Git repository: branch `main`. Public remote:
 
 - Public plugin name: `Sequencer Item Recovery`
 - Assembly identifier: `3c52a960-96a7-41a6-a06a-4aa54f4c0df9`
-- Current version: `0.1.11.0`
+- Current version: `0.1.12.0`
 - Minimum N.I.N.A. version: `3.2.0.9001`
 - Current build output: `src/NinaSequenceDiff/bin/Release/net8.0-windows/SequencerItemRecovery.dll`
 - Licence: `MPL-2.0`, confirmed by Jost Jahn on 2026-09-12. The complete
@@ -31,6 +32,8 @@ Local Git repository: branch `main`. Public remote:
   `https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.11.0`.
 - Published ZIP SHA-256:
   `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`.
+- Approved 0.1.12.0 ZIP SHA-256:
+  `51F141A97697238340D887A1A2D4AF42D3CC9A8264D32F45206F51ED47F787B1`.
 
 ## Maintainer decisions
 
@@ -71,6 +74,16 @@ Local Git repository: branch `main`. Public remote:
   validation scripts.
 - [x] Manifest submitted to the official repository in pull request
   `https://github.com/isbeorn/nina.plugin.manifests/pull/690`.
+- [x] Version 0.1.12.0 passed all 22 automated tests and the Release build on
+  2026-09-19. Its exact DLL was loaded visibly in N.I.N.A. 3.2.0.9001.
+- [x] Version 0.1.12.0 N.I.N.A. checks confirmed that a reordered duplicate
+  block does not create a false deletion, an ambiguous duplicate cannot be
+  restored, and a distinct three-item block is restored as one block.
+- [x] Jost Jahn explicitly approved public publication of version 0.1.12.0 on
+  2026-09-19.
+- [ ] Create immutable tag `v0.1.12.0`, publish its GitHub Release, and verify
+  the externally downloaded ZIP checksum.
+- [ ] Upload the validated 0.1.12.0 website files and verify their public URLs.
 
 ## Required human release check
 

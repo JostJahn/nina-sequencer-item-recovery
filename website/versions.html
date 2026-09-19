@@ -15,12 +15,12 @@
     <main class="content">
       <section class="hero">
         <p class="eyebrow">Versions and verification</p>
-        <h1>Sequencer Item Recovery candidates and releases</h1>
-        <p class="lead">Verification details for the local 0.1.12.0 candidate
-          and the published 0.1.11.0 release for N.I.N.A. 3.2.0.9001 or newer.</p>
+        <h1>Sequencer Item Recovery 0.1.12.0</h1>
+        <p class="lead">The current manually installable ZIP package for
+          N.I.N.A. 3.2.0.9001 or newer.</p>
       </section>
       <section class="panel">
-        <h2>0.1.12.0 candidate — not published</h2>
+        <h2>Current download</h2>
         <p><a class="download-button" href="downloads/SequencerItemRecovery-0.1.12.0.zip" download>Download SequencerItemRecovery-0.1.12.0.zip</a></p>
         <p>Archive: <code>SequencerItemRecovery-0.1.12.0.zip</code> · 30,532 bytes ·
           contents: <code>SequencerItemRecovery.dll</code></p>
@@ -28,8 +28,8 @@
         <p><a href="downloads/SequencerItemRecovery-0.1.12.0.zip.sha256">Download the SHA-256 checksum file</a></p>
       </section>
       <section class="panel">
-        <h2>Candidate verification</h2>
-        <p>The candidate ZIP contains only the plugin DLL. Automated tests
+        <h2>How this release was checked</h2>
+        <p>The ZIP contains only the plugin DLL. Automated tests
           passed 22 of 22 cases. The exact DLL was installed and visibly loaded
           by N.I.N.A. 3.2.0.9001; moved duplicate blocks produced no false
           deletion, and a distinct three-item block was restored completely.</p>
@@ -37,18 +37,16 @@
           installer. It is not Authenticode-signed. New or little-used
           downloads can therefore receive additional Windows security checks;
           compare the SHA-256 value before installation.</p>
-        <p>This candidate has not been published to GitHub or submitted as an
-          update to the N.I.N.A. community plugin catalog.</p>
       </section>
       <section class="panel">
-        <h2>Published 0.1.11.0 release</h2>
+        <h2>Earlier 0.1.11.0 release</h2>
         <p><a href="downloads/SequencerItemRecovery.zip" download>Download the published 0.1.11.0 ZIP</a>
           · <a href="downloads/SequencerItemRecovery.zip.sha256">SHA-256 file</a>
           · <a href="https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.11.0">Original GitHub release</a></p>
       </section>
       <section class="panel">
         <h2>Release history</h2>
-        <p>2026-09-19 · Version 0.1.12.0 · Local candidate. Prevents a moved
+        <p>2026-09-19 · Version 0.1.12.0 · Public release. Prevents a moved
           duplicate block from being reported as deleted; safely suppresses
           child rows for a removed block and keeps ambiguous duplicates
           non-restorable.</p>

@@ -1,6 +1,6 @@
 # Sequencer Item Recovery 0.1.12.0 — draft release notes
 
-Status: reviewed release candidate; not published yet.
+Status: approved for publication; GitHub Release creation pending.
 
 ## Highlights
 
@@ -28,7 +28,7 @@ Status: reviewed release candidate; not published yet.
 
 ## Package
 
-- File: `SequencerItemRecovery-0.1.12.0.zip`
+- File: `SequencerItemRecovery.zip`
 - SHA-256:
   `51F141A97697238340D887A1A2D4AF42D3CC9A8264D32F45206F51ED47F787B1`
 - Minimum N.I.N.A. version: `3.2.0.9001`

@@ -1,0 +1,31 @@
+{
+  "profile_id": "nina-sequencer-item-recovery-sftp",
+  "source_root": "E:\\codex\\nina-plugin\\website",
+  "mirror_root": "E:\\codex\\nina-plugin\\website",
+  "remote_root": "/my_nina_plugins",
+  "public_url": "https://www.jostjahn.de/my_nina_plugins",
+  "checker": "tools/validate_public_website.ps1",
+  "checker_args": [],
+  "files": [
+    { "source": "assets/my-nina-plugins-mark.svg", "target": "assets/my-nina-plugins-mark.svg", "classification": "public" },
+    { "source": "assets/recycle-mark.svg", "target": "assets/recycle-mark.svg", "classification": "public" },
+    { "source": "assets/site.css", "target": "assets/site.css", "classification": "public" },
+    { "source": "assets/site.js", "target": "assets/site.js", "classification": "public" },
+    { "source": "cli-parameters.html", "target": "cli-parameters.html", "classification": "public" },
+    { "source": "detailed-guide.html", "target": "detailed-guide.html", "classification": "public" },
+    { "source": "faq.html", "target": "faq.html", "classification": "public" },
+    { "source": "help.html", "target": "help.html", "classification": "public" },
+    { "source": "index.html", "target": "index.html", "classification": "public" },
+    { "source": "install.html", "target": "install.html", "classification": "public" },
+    { "source": "legal.html", "target": "legal.html", "classification": "public" },
+    { "source": "license.html", "target": "license.html", "classification": "public" },
+    { "source": "privacy.html", "target": "privacy.html", "classification": "public" },
+    { "source": "sequencer-item-recovery.html", "target": "sequencer-item-recovery.html", "classification": "public" },
+    { "source": "versionen.txt", "target": "versionen.txt", "classification": "public" },
+    { "source": "versions.html", "target": "versions.html", "classification": "public" },
+    { "source": "downloads/SequencerItemRecovery.zip", "target": "downloads/SequencerItemRecovery.zip", "classification": "public" },
+    { "source": "downloads/SequencerItemRecovery.zip.sha256", "target": "downloads/SequencerItemRecovery.zip.sha256", "classification": "public" },
+    { "source": "downloads/SequencerItemRecovery-0.1.12.0.zip", "target": "downloads/SequencerItemRecovery-0.1.12.0.zip", "classification": "public" },
+    { "source": "downloads/SequencerItemRecovery-0.1.12.0.zip.sha256", "target": "downloads/SequencerItemRecovery-0.1.12.0.zip.sha256", "classification": "public" }
+  ]
+}
