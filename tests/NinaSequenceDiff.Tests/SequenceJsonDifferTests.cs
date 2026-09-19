@@ -264,6 +264,9 @@ public sealed class SequenceJsonDifferTests {
             }
             """;
         var difference = Assert.Single(SequenceJsonDiffer.Compare(before, after));
+        SequenceDiffDockableVM.SetRestoreBaseline(
+            new[] { difference },
+            before);
 
         var restored = JObject.Parse(SequenceJsonRestore.Restore(after, difference));
         var item = (JObject)restored["Items"]!["$values"]![0]!;
@@ -286,21 +289,21 @@ public sealed class SequenceJsonDifferTests {
         var currentParent = new SequentialContainer { Name = "Target instructions" };
         currentRoot.Add(currentParent);
 
-        var difference = new SequenceDifference(
-            SequenceDifferenceKind.Removed,
-            "$.Items.$values[0].Items.$values[0]",
-            "Target instructions",
-            "Deleted block",
-            string.Empty,
-            "Deleted block",
-            string.Empty,
-            "{}",
-            null,
-            true,
-            "Deleted block",
-            string.Empty);
+        var baselineJson = SerializeRoot(baselineRoot);
+        var currentJson = SerializeRoot(currentRoot);
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(
+                baselineJson,
+                currentJson));
+        SequenceDiffDockableVM.SetRestoreBaseline(
+            new[] { difference },
+            baselineJson);
 
-        SequenceJsonRestore.RestoreRemovedItem(currentRoot, baselineRoot, difference);
+        SequenceJsonRestore.RestoreRemovedItem(
+            currentRoot,
+            baselineRoot,
+            difference,
+            currentJson);
 
         var restoredBlock = Assert.IsType<SequentialContainer>(Assert.Single(currentParent.Items));
         Assert.NotSame(removedBlock, restoredBlock);
@@ -327,19 +330,15 @@ public sealed class SequenceJsonDifferTests {
         };
         currentRoot.Add(currentParent);
 
-        var difference = new SequenceDifference(
-            SequenceDifferenceKind.Removed,
-            "$.Items.$values[0].Items.$values[0]",
-            "Target instructions",
-            "Wait For Time Span",
-            string.Empty,
-            "Wait For Time Span",
-            string.Empty,
-            "{}",
-            null,
-            true,
-            "Wait For Time Span",
-            string.Empty);
+        var baselineJson = SerializeRoot(baselineRoot);
+        var currentJson = SerializeRoot(currentRoot);
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(
+                baselineJson,
+                currentJson));
+        SequenceDiffDockableVM.SetRestoreBaseline(
+            new[] { difference },
+            baselineJson);
         var observableItems = Assert.IsAssignableFrom<
             INotifyCollectionChanged>(currentParent.Items);
         observableItems.CollectionChanged += (_, _) =>
@@ -349,12 +348,309 @@ public sealed class SequenceJsonDifferTests {
         SequenceJsonRestore.RestoreRemovedItem(
             currentRoot,
             baselineRoot,
-            difference);
+            difference,
+            currentJson);
 
         var restoredItem = Assert.IsType<WaitForTimeSpan>(
             Assert.Single(currentParent.Items));
         Assert.NotSame(removedItem, restoredItem);
         Assert.Same(currentParent, restoredItem.Parent);
+    }
+
+    [Fact]
+    public void Compare_matches_same_named_waits_by_their_complete_settings() {
+        const string before = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "1" } },
+                { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 10, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string after = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 10, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(before, after));
+
+        Assert.Equal("$.Items['$values'][0]", difference.Path);
+        Assert.Contains("Duration: 5", difference.InstructionDetails);
+        Assert.True(difference.SourceIdentityIsUnique);
+        Assert.True(difference.HasSafeRestoreIdentity);
+    }
+
+    [Fact]
+    public void Compare_marks_identical_repeated_items_as_not_restorable() {
+        const string before = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "1" } },
+                { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string after = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(before, after));
+
+        Assert.False(difference.SourceIdentityIsUnique);
+        Assert.False(difference.HasSafeRestoreIdentity);
+        Assert.Contains("cannot be distinguished safely", difference.InstructionDetails);
+    }
+
+    [Fact]
+    public void Compare_removed_items_ignores_a_moved_block() {
+        const string before = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "First block", "Items": { "$values": [] }, "Parent": { "$ref": "1" } },
+                { "$id": "3", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Second block", "Items": { "$values": [] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string after = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "3", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Second block", "Items": { "$values": [] }, "Parent": { "$ref": "1" } },
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "First block", "Items": { "$values": [] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+
+        var differences = SequenceJsonDiffer.CompareRemovedSequencerItems(
+            before,
+            after);
+
+        Assert.Empty(differences);
+    }
+
+    [Fact]
+    public void Compare_removed_items_reports_a_deleted_block_not_its_children() {
+        const string before = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Deleted block", "Items": { "$values": [
+                  { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "2" } },
+                  { "$id": "4", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "2" } }
+                ] }, "Parent": { "$ref": "1" } },
+                { "$id": "5", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "1" } },
+                { "$id": "6", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string after = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "5", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "1" } },
+                { "$id": "6", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 1, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(before, after));
+
+        Assert.Equal("Deleted block", difference.InstructionText);
+        Assert.Contains("Items: 2", difference.InstructionDetails);
+    }
+
+    [Fact]
+    public void Compare_treats_a_setting_change_on_one_named_item_as_a_change() {
+        const string before = """
+            {
+              "Items": [
+                { "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5 }
+              ]
+            }
+            """;
+        const string after = """
+            {
+              "Items": [
+                { "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 10 }
+              ]
+            }
+            """;
+
+        var differences = SequenceJsonDiffer.Compare(before, after);
+
+        var difference = Assert.Single(differences);
+        Assert.Equal(SequenceDifferenceKind.Changed, difference.Kind);
+        Assert.Equal("$.Items[0].Duration", difference.Path);
+    }
+
+    [Fact]
+    public void Restore_finds_the_original_block_after_an_earlier_block_was_removed() {
+        var baselineRoot = new SequenceRootContainer();
+        var blockA = new SequentialContainer { Name = "Block A" };
+        var blockB = new SequentialContainer { Name = "Block B" };
+        var removedWait = new WaitForTimeSpan();
+        baselineRoot.Add(blockA);
+        baselineRoot.Add(blockB);
+        blockB.Add(removedWait);
+
+        var currentRoot = new SequenceRootContainer();
+        var currentBlockB = new SequentialContainer { Name = "Block B" };
+        currentRoot.Add(currentBlockB);
+
+        var baselineJson = SerializeRoot(baselineRoot);
+        var currentJson = SerializeRoot(currentRoot);
+        var difference = Assert.Single(
+            SequenceJsonDiffer.CompareRemovedSequencerItems(
+                baselineJson,
+                currentJson),
+            item => item.InstructionText == "Wait For Time Span");
+        SequenceDiffDockableVM.SetRestoreBaseline(
+            new[] { difference },
+            baselineJson);
+
+        SequenceJsonRestore.RestoreRemovedItem(
+            currentRoot,
+            baselineRoot,
+            difference,
+            currentJson);
+
+        var restoredWait = Assert.IsType<WaitForTimeSpan>(
+            Assert.Single(currentBlockB.Items));
+        Assert.NotSame(removedWait, restoredWait);
+        Assert.Same(currentBlockB, restoredWait.Parent);
+    }
+
+    [Fact]
+    public void Restore_rejects_multiple_current_parents_with_the_same_identity() {
+        const string baseline = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Block B", "Items": { "$values": [
+                  { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "2" } }
+                ] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string current = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "4", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Block B", "Items": { "$values": [] }, "Parent": { "$ref": "1" } },
+                { "$id": "5", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Block B", "Items": { "$values": [] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string path = "$.Items['$values'][0].Items['$values'][0]";
+        var difference = SequenceJsonDiffer.CreateRemovedSequencerItemAtPath(
+            baseline,
+            path);
+        Assert.NotNull(difference);
+        difference!.RestoreBaselineJson = baseline;
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SequenceJsonRestore.Restore(current, difference));
+
+        Assert.Contains("More than one current block", exception.Message);
+    }
+
+    [Fact]
+    public void Restore_rejects_a_parent_whose_own_settings_changed() {
+        // Child collections are deliberately excluded from a block fingerprint,
+        // because deleting this item changes that collection. The block's own
+        // settings remain part of the fingerprint, so Restore must not insert
+        // into a block that was independently edited after the deletion.
+        const string baseline = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Block B", "Description": "Original", "Items": { "$values": [
+                  { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "Wait", "Duration": 5, "Parent": { "$ref": "2" } }
+                ] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string current = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.Container.SequentialContainer, NINA", "Name": "Block B", "Description": "Edited", "Items": { "$values": [] }, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        var difference = SequenceJsonDiffer.CreateRemovedSequencerItemAtPath(
+            baseline,
+            "$.Items['$values'][0].Items['$values'][0]");
+        Assert.NotNull(difference);
+        difference!.RestoreBaselineJson = baseline;
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SequenceJsonRestore.Restore(current, difference));
+
+        Assert.Contains("destination parent is no longer present", exception.Message);
+    }
+
+    [Fact]
+    public void Restore_rejects_a_reordered_neighbourhood() {
+        const string baseline = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "2", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "A", "Duration": 1, "Parent": { "$ref": "1" } },
+                { "$id": "3", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "B", "Duration": 2, "Parent": { "$ref": "1" } },
+                { "$id": "4", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "C", "Duration": 3, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string current = """
+            {
+              "$id": "1",
+              "$type": "NINA.Sequencer.Container.SequentialContainer, NINA",
+              "Items": { "$values": [
+                { "$id": "4", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "C", "Duration": 3, "Parent": { "$ref": "1" } },
+                { "$id": "2", "$type": "NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA", "Name": "A", "Duration": 1, "Parent": { "$ref": "1" } }
+              ] }
+            }
+            """;
+        const string path = "$.Items['$values'][1]";
+        var difference = SequenceJsonDiffer.CreateRemovedSequencerItemAtPath(
+            baseline,
+            path);
+        Assert.NotNull(difference);
+        difference!.RestoreBaselineJson = baseline;
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SequenceJsonRestore.Restore(current, difference));
+
+        Assert.Contains("ambiguous order", exception.Message);
     }
 
     [Fact]
@@ -454,4 +750,14 @@ public sealed class SequenceJsonDifferTests {
             hasRemovedItems: true));
         Assert.Equal("\"first state plus another new item\"", baseline.Json);
     }
+
+    // N.I.N.A.'s own reference-preserving serializer gives the live-container
+    // tests the same Items/$values paths that production Restore receives.
+    private static string SerializeRoot(ISequenceRootContainer root) =>
+        JsonConvert.SerializeObject(
+            root,
+            new JsonSerializerSettings {
+                TypeNameHandling = TypeNameHandling.All,
+                PreserveReferencesHandling = PreserveReferencesHandling.All
+            });
 }

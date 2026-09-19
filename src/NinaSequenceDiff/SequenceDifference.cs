@@ -33,7 +33,12 @@ public sealed class SequenceDifference {
         string? afterJson,
         bool isRemovedSequencerItem,
         string instructionText,
-        string instructionDetails) {
+        string instructionDetails,
+        string? sourceIdentity = null,
+        string? destinationParentIdentity = null,
+        string? previousSiblingIdentity = null,
+        string? nextSiblingIdentity = null,
+        bool sourceIdentityIsUnique = true) {
         Kind = kind;
         Path = path;
         Location = location;
@@ -46,6 +51,11 @@ public sealed class SequenceDifference {
         IsRemovedSequencerItem = isRemovedSequencerItem;
         InstructionText = instructionText;
         InstructionDetails = instructionDetails;
+        SourceIdentity = sourceIdentity;
+        DestinationParentIdentity = destinationParentIdentity;
+        PreviousSiblingIdentity = previousSiblingIdentity;
+        NextSiblingIdentity = nextSiblingIdentity;
+        SourceIdentityIsUnique = sourceIdentityIsUnique;
     }
 
     // The differ does not know when N.I.N.A. changed the tree. The view model
@@ -102,6 +112,29 @@ public sealed class SequenceDifference {
     /// Short, human-readable settings that identify the removed item.
     /// </summary>
     public string InstructionDetails { get; }
+
+    // A recovery row carries immutable fingerprints from the baseline JSON.
+    // They are not user-visible labels: Restore uses them to prove that the
+    // original item and its destination container can still be identified.
+    internal string? SourceIdentity { get; }
+
+    internal string? DestinationParentIdentity { get; }
+
+    // The nearest original siblings provide a stable insertion neighbourhood.
+    // An old numeric index alone is unsafe after a person moves another row.
+    internal string? PreviousSiblingIdentity { get; }
+
+    internal string? NextSiblingIdentity { get; }
+
+    // Equal-looking items may have identical complete JSON. The comparison
+    // cannot prove which one disappeared, so their Restore button is disabled.
+    internal bool SourceIdentityIsUnique { get; }
+
+    internal bool HasSafeRestoreIdentity =>
+        IsRemovedSequencerItem &&
+        SourceIdentityIsUnique &&
+        !string.IsNullOrWhiteSpace(SourceIdentity) &&
+        !string.IsNullOrWhiteSpace(DestinationParentIdentity);
 
     public string LocationToolTip => Location;
 

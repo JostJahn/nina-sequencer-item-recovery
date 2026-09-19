@@ -11,23 +11,25 @@ namespace NinaSequenceDiff;
 /// Production recovery works with N.I.N.A.'s live object tree. The JSON helper
 /// remains for tests and diagnostics, where it rebuilds reference IDs and
 /// parent links before N.I.N.A. deserializes the result.
-    /// </summary>
+/// </summary>
 internal static class SequenceJsonRestore {
     /// <summary>
     /// Clones one deleted instruction or block from the baseline tree and
     /// inserts it into the matching location in the current live tree.
-///
-/// The baseline is first deserialized as a complete N.I.N.A. sequence. This is
-/// safer than joining two JSON documents: their $id and $ref values are
-/// local to one serialization run and cannot safely be mixed.
+    ///
+    /// The baseline is first deserialized as a complete N.I.N.A. sequence.
+    /// This is safer than joining two JSON documents: their $id and $ref
+    /// values are local to one serialization run and cannot safely be mixed.
     /// </summary>
     public static void RestoreRemovedItem(
         ISequenceRootContainer currentRoot,
         ISequenceRootContainer baselineRoot,
-        SequenceDifference difference) {
+        SequenceDifference difference,
+        string currentJson) {
         ArgumentNullException.ThrowIfNull(currentRoot);
         ArgumentNullException.ThrowIfNull(baselineRoot);
         ArgumentNullException.ThrowIfNull(difference);
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentJson);
 
         // The visible Restore button should only reach this method for a whole
         // item that the differ identified as removed. Keep the guard here too,
@@ -37,6 +39,16 @@ internal static class SequenceJsonRestore {
             throw new InvalidOperationException(
                 "Only a removed Advanced Sequencer instruction can be " +
                 "restored.");
+        }
+
+        // A path is only an address in the old tree. It is never enough to
+        // prove that an item or parent in a changed live tree is the intended
+        // one. Every production restore therefore requires the fingerprints
+        // captured from the baseline before the deletion occurred.
+        if (!difference.HasSafeRestoreIdentity) {
+            throw new InvalidOperationException(
+                "This deleted instruction cannot be identified uniquely, so " +
+                "Sequencer Item Recovery will not restore it.");
         }
 
         // Each nested Items array contributes one index. For example, a block's
@@ -50,20 +62,22 @@ internal static class SequenceJsonRestore {
 
         // Read from the old baseline but attach to the current sequence. The
         // two roots intentionally differ because one still contains the item.
+        // First prove that the supplied baseline still contains exactly the
+        // item recorded in the recovery row.
+        ValidateBaselineSource(difference);
         var sourceItem = GetItem(baselineRoot, itemIndices);
-        var parentIndices = itemIndices.Take(itemIndices.Count - 1).ToArray();
-        var destination = GetContainer(currentRoot, parentIndices);
+        var destinationMatch = FindUniqueDestination(currentJson, difference);
+        var destination = GetContainer(currentRoot, destinationMatch.Indices);
         var restoredItem = sourceItem.Clone() as ISequenceItem
             ?? throw new InvalidOperationException(
                 "N.I.N.A. could not clone the deleted instruction.");
 
-        // Clamp only prevents an invalid collection index. It does not invent a
-        // parent: GetContainer above already proved that the original block is
-        // still present in the current sequence.
-        var insertionIndex = Math.Clamp(
-            itemIndices[^1],
-            0,
-            destination.Items.Count);
+        // Neighbour fingerprints choose the insertion position in the current
+        // container. Reusing the old numeric index would silently place an
+        // item beside a different row after blocks were moved or removed.
+        var insertionIndex = FindUniqueInsertionIndex(
+            destinationMatch.Items,
+            difference);
         restoredItem.AttachNewParent(destination);
 
         /*
@@ -109,10 +123,10 @@ internal static class SequenceJsonRestore {
 
     /// <summary>
     /// Restores a previous JSON value without a live N.I.N.A. view model.
-///
-/// This is retained for unit tests and diagnostics. The dockable panel uses
-/// RestoreRemovedItem instead, because cloning through N.I.N.A.'s object model
-/// is the safer production path.
+    ///
+    /// This is retained for unit tests and diagnostics. The dockable panel
+    /// uses RestoreRemovedItem instead, because cloning through N.I.N.A.'s
+    /// object model is the safer production path.
     /// </summary>
     public static string Restore(
         string currentJson,
@@ -121,20 +135,216 @@ internal static class SequenceJsonRestore {
         ArgumentNullException.ThrowIfNull(difference);
 
         if (difference.Kind == SequenceDifferenceKind.Added
-            || string.IsNullOrWhiteSpace(difference.BeforeJson)) {
+            || string.IsNullOrWhiteSpace(difference.BeforeJson)
+            || !difference.HasSafeRestoreIdentity) {
             throw new InvalidOperationException(
-                "This change has no previous value to restore.");
+                "This change cannot be identified safely for restoration.");
         }
 
         var root = JToken.Parse(currentJson);
         var previousValue = JToken.Parse(difference.BeforeJson);
-        var restored = ApplyPreviousValue(root, difference, previousValue);
+        ValidateBaselineSource(difference);
+        var destination = FindUniqueDestination(root, difference);
+        if (previousValue is not JObject previousItem) {
+            throw new InvalidOperationException(
+                "The previous sequence value is not a complete instruction.");
+        }
+
+        var insertionIndex = FindUniqueInsertionIndex(destination.Items, difference);
+        destination.Items.Insert(insertionIndex, previousItem.DeepClone());
+        var restored = root;
 
         // The inserted fragment needs fresh reference IDs and correct Parent
         // references before it can be read as a N.I.N.A. sequence again.
         NormalizeReferences(restored);
         return restored.ToString(Formatting.Indented);
     }
+
+    /// <summary>
+    /// Confirms that the exact baseline item stored at the original path still
+    /// has the fingerprint captured with this row. This rejects stale or
+    /// malformed rows before any live Sequencer object is cloned.
+    /// </summary>
+    private static void ValidateBaselineSource(SequenceDifference difference) {
+        var baselineJson = difference.RestoreBaselineJson;
+        if (string.IsNullOrWhiteSpace(baselineJson)
+            || string.IsNullOrWhiteSpace(difference.SourceIdentity)) {
+            throw new InvalidOperationException(
+                "The recovery row does not have a complete source identity.");
+        }
+
+        var source = JToken.Parse(baselineJson).SelectToken(difference.Path)
+            as JObject;
+        if (source is null
+            || !string.Equals(
+                SequenceJsonDiffer.CreateItemIdentity(source),
+                difference.SourceIdentity,
+                StringComparison.Ordinal)) {
+            throw new InvalidOperationException(
+                "The recovery source no longer matches the deleted " +
+                "instruction.");
+        }
+    }
+
+    /// <summary>
+    /// Finds the one current container whose stable identity matches the
+    /// original destination parent. Changed, missing, or duplicate candidates
+    /// are deliberately rejected instead of guessing from an obsolete index.
+    /// </summary>
+    private static DestinationMatch FindUniqueDestination(
+        string currentJson,
+        SequenceDifference difference) => FindUniqueDestination(
+            JToken.Parse(currentJson),
+            difference);
+
+    private static DestinationMatch FindUniqueDestination(
+        JToken currentRoot,
+        SequenceDifference difference) {
+        if (currentRoot is not JObject root
+            || string.IsNullOrWhiteSpace(difference.DestinationParentIdentity)) {
+            throw new InvalidOperationException(
+                "The original destination parent cannot be identified safely.");
+        }
+
+        var matches = new List<DestinationMatch>();
+        FindDestinationMatches(
+            root,
+            Array.Empty<int>(),
+            difference.DestinationParentIdentity,
+            matches);
+        if (matches.Count != 1) {
+            throw new InvalidOperationException(matches.Count == 0
+                ? "The original destination parent is no longer present in " +
+                  "the current sequence."
+                : "More than one current block matches the original parent; " +
+                  "Sequencer Item Recovery will not guess where to restore.");
+        }
+
+        return matches.Single();
+    }
+
+    private static void FindDestinationMatches(
+        JObject container,
+        IReadOnlyList<int> indices,
+        string destinationIdentity,
+        ICollection<DestinationMatch> matches) {
+        if (SequenceJsonDiffer.IsSequenceContainer(container)
+            && string.Equals(
+                SequenceJsonDiffer.CreateContainerIdentity(container),
+                destinationIdentity,
+                StringComparison.Ordinal)
+            && container["Items"]?["$values"] is JArray items) {
+            matches.Add(new DestinationMatch(indices.ToArray(), items));
+        }
+
+        if (container["Items"]?["$values"] is not JArray children) {
+            return;
+        }
+
+        for (var index = 0; index < children.Count; index++) {
+            if (children[index] is not JObject child
+                || !SequenceJsonDiffer.IsSequenceContainer(child)) {
+                continue;
+            }
+
+            FindDestinationMatches(
+                child,
+                indices.Append(index).ToArray(),
+                destinationIdentity,
+                matches);
+        }
+    }
+
+    /// <summary>
+    /// Chooses a position relative to the original neighbouring instructions.
+    /// A missing or non-unique neighbour means the requested position cannot
+    /// be proven, so Restore fails without mutating the sequence.
+    /// </summary>
+    private static int FindUniqueInsertionIndex(
+        JArray currentItems,
+        SequenceDifference difference) {
+        var currentIdentities = currentItems
+            .Select((item, index) => new CurrentItemIdentity(
+                index,
+                item is JObject sequenceItem
+                    && IsSequencerItem(sequenceItem)
+                    ? SequenceJsonDiffer.CreateItemIdentity(sequenceItem)
+                    : null))
+            .ToArray();
+        var previous = FindUniqueSiblingIndex(
+            currentIdentities,
+            difference.PreviousSiblingIdentity,
+            "previous");
+        var next = FindUniqueSiblingIndex(
+            currentIdentities,
+            difference.NextSiblingIdentity,
+            "next");
+
+        if (previous.HasValue && next.HasValue) {
+            if (previous.Value >= next.Value) {
+                throw new InvalidOperationException(
+                    "The original neighbouring instructions have moved into " +
+                    "an ambiguous order.");
+            }
+
+            return next.Value;
+        }
+
+        if (next.HasValue) {
+            return next.Value;
+        }
+
+        if (previous.HasValue) {
+            return previous.Value + 1;
+        }
+
+        if (currentItems.Count == 0
+            && difference.PreviousSiblingIdentity is null
+            && difference.NextSiblingIdentity is null) {
+            return 0;
+        }
+
+        throw new InvalidOperationException(
+            "The original neighbouring instructions are no longer present; " +
+            "Sequencer Item Recovery will not guess an insertion position.");
+    }
+
+    private static int? FindUniqueSiblingIndex(
+        IEnumerable<CurrentItemIdentity> currentIdentities,
+        string? expectedIdentity,
+        string side) {
+        if (string.IsNullOrWhiteSpace(expectedIdentity)) {
+            return null;
+        }
+
+        var matches = currentIdentities
+            .Where(item => string.Equals(
+                item.Identity,
+                expectedIdentity,
+                StringComparison.Ordinal))
+            .Select(item => item.Index)
+            .ToArray();
+        if (matches.Length != 1) {
+            throw new InvalidOperationException(matches.Length == 0
+                ? $"The original {side} neighbouring instruction is no " +
+                  "longer present."
+                : $"More than one current instruction matches the original " +
+                  $"{side} neighbour.");
+        }
+
+        return matches[0];
+    }
+
+    private static bool IsSequencerItem(JObject value) =>
+        value["$type"]?.Value<string>() is { } type
+        && (type.Contains(".SequenceItem.", StringComparison.Ordinal)
+            || type.Contains(".Container.", StringComparison.Ordinal));
+
+    private sealed record DestinationMatch(
+        IReadOnlyList<int> Indices,
+        JArray Items);
+
+    private sealed record CurrentItemIdentity(int Index, string? Identity);
 
     /// <summary>
     /// Walks the baseline Items hierarchy and returns the item at the recorded
@@ -195,93 +405,12 @@ internal static class SequenceJsonRestore {
     }
 
     /// <summary>
-    /// Applies the earlier value to a parsed JSON tree. A removed array entry
-    /// is
-    /// inserted; a removed property or changed value is replaced in place.
-    /// </summary>
-    private static JToken ApplyPreviousValue(
-        JToken root,
-        SequenceDifference difference,
-        JToken previousValue) {
-        var steps = ParsePath(difference.Path);
-        if (steps.Count == 0) {
-            // A root-level change has no parent. Its prior value becomes root.
-            return previousValue.DeepClone();
-        }
-
-        var parent = Resolve(root, steps.Take(steps.Count - 1).ToArray());
-        var finalStep = steps[^1];
-
-        if (difference.Kind == SequenceDifferenceKind.Removed
-            && finalStep is ArrayIndexStep insertionIndex) {
-            if (parent is not JArray array) {
-                throw new InvalidOperationException(
-                    "The previous sequence item cannot be restored at this " +
-                    "location.");
-            }
-
-            array.Insert(
-                Math.Clamp(insertionIndex.Index, 0, array.Count),
-                previousValue.DeepClone());
-            return root;
-        }
-
-        switch (finalStep) {
-            case PropertyStep property when parent is JObject objectParent:
-                objectParent[property.Name] = previousValue.DeepClone();
-                return root;
-
-            case ArrayIndexStep arrayIndex
-                when parent is JArray arrayParent
-                && arrayIndex.Index >= 0
-                && arrayIndex.Index < arrayParent.Count:
-                arrayParent[arrayIndex.Index] = previousValue.DeepClone();
-                return root;
-
-            default:
-                throw new InvalidOperationException(
-                    "The current sequence no longer matches the selected " +
-                    "change.");
-        }
-    }
-
-    /// <summary>
-    /// Follows already parsed path steps to the requested JSON value. A missing
-    /// property or index means the current tree no longer matches the result.
-    /// </summary>
-    private static JToken Resolve(
-        JToken root,
-        IReadOnlyList<JsonPathStep> steps) {
-        var current = root;
-
-        foreach (var step in steps) {
-            current = step switch {
-                PropertyStep property
-                    when current is JObject objectCurrent
-                    && objectCurrent.TryGetValue(
-                        property.Name,
-                        out var value) => value,
-
-                ArrayIndexStep index
-                    when current is JArray array
-                    && index.Index >= 0
-                    && index.Index < array.Count => array[index.Index],
-
-                _ => throw new InvalidOperationException(
-                    "The current sequence no longer matches the selected " +
-                    "change.")
-            };
-        }
-
-        return current;
-    }
-
-    /// <summary>
     /// Parses the small JSON-path language produced by SequenceJsonDiffer.
-///
-/// Supported steps are ordinary properties (.Name), quoted properties
-/// (['Name with spaces']), and array indices ([3]). The parser rejects every
-/// other form rather than guessing which part of a sequence to change.
+    ///
+    /// Supported steps are ordinary properties (.Name), quoted properties
+    /// (['Name with spaces']), and array indices ([3]). The parser rejects
+    /// every other form rather than guessing which part of a sequence to
+    /// change.
     /// </summary>
     private static IReadOnlyList<JsonPathStep> ParsePath(string path) {
         if (string.IsNullOrWhiteSpace(path) || path[0] != '$') {

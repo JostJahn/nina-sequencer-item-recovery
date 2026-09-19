@@ -1,4 +1,4 @@
-# Sequencer Item Recovery 0.1.11.0 — draft release notes
+# Sequencer Item Recovery 0.1.12.0 — draft release notes
 
 Status: reviewed release candidate; not published yet.
 
@@ -20,12 +20,17 @@ Status: reviewed release candidate; not published yet.
 - Treats a committed restore as successful if N.I.N.A.'s WPF layout observer
   throws after the item has already been inserted. This prevents a stale row
   and a duplicate from a second click.
+- Matches Advanced Sequencer items by stable identity rather than their visual
+  ordering. Moving equal-looking blocks no longer reports a deletion.
+- Reports one deleted container instead of also listing its deleted children.
+  When equal-looking instances cannot be distinguished safely, Restore remains
+  unavailable instead of guessing which instance should be restored.
 
 ## Package
 
-- File: `SequencerItemRecovery.zip`
+- File: `SequencerItemRecovery-0.1.12.0.zip`
 - SHA-256:
-  `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`
+  `51F141A97697238340D887A1A2D4AF42D3CC9A8264D32F45206F51ED47F787B1`
 - Minimum N.I.N.A. version: `3.2.0.9001`
 
 ## Manual verification
@@ -38,6 +43,10 @@ Status: reviewed release candidate; not published yet.
   instructions, restoration of a complete block, safe restoration while the
   sequence was paused, reopening the panel, and the stale-row regression.
 - The final artifact smoke test restored the removed `'Dusk'` instruction.
+- The 0.1.12.0 candidate was built and tested on 2026-09-19. Its N.I.N.A.
+  interface test confirmed a reordered duplicate block creates no false
+  deletion, an ambiguous duplicate remains safely non-restorable, and a
+  distinct three-item block is restored completely.
 
 ## Human-maintainer statement
 

@@ -111,6 +111,12 @@
                     disappears because it is no longer removed. Restoring one
                     item does not discard other still-visible 'Restore' rows.
                 </TextBlock>
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap">
+                    Safety check: 'Restore' is disabled when the deleted item,
+                    its original block, or its neighbouring instructions cannot
+                    be identified uniquely. Sequencer Item Recovery does not
+                    guess a destination after duplicate or reordered items.
+                </TextBlock>
 
                 <TextBlock
                     Margin="0,16,0,0"

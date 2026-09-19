@@ -8,6 +8,7 @@ using NINA.Sequencer.SequenceItem;
 using NINA.Sequencer.Serialization;
 using NINA.ViewModel.Sequencer;
 using NINA.WPF.Base.ViewModel;
+using Newtonsoft.Json.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -57,8 +58,9 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
         observedItemCollections = new();
 
     // A collection event provides the removed live object and its exact former
-    // position. Keep that evidence until Restore or a deliberate new baseline
-    // clears it. This fallback is independent of JSON array alignment.
+    // position. It fills the gap between timer snapshots, but Refresh discards
+    // it when the same item is already present in the current JSON. That makes
+    // N.I.N.A.'s remove-and-reinsert implementation of a block move harmless.
     private readonly Dictionary<ISequenceItem, SequenceDifference>
         eventRemovedItems = new(ReferenceEqualityComparer.Instance);
 
@@ -242,13 +244,14 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
             // Prefer the loaded or manually chosen baseline when both sources
             // identify the same path. It is the stronger reference, while the
             // working snapshot contributes only newly added deleted items.
+            var activeEventRemovals = GetMissingEventRemovals(currentJson);
             var differences = MergeRemovedItems(
                 primaryDifferences,
                 workingDifferences,
                 MaximumRemovedItems);
             differences = MergeRemovedItems(
                 differences,
-                eventRemovedItems.Values,
+                activeEventRemovals,
                 MaximumRemovedItems);
 
             // Until something disappears, the working snapshot follows normal
@@ -264,7 +267,7 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
                 ?.AdvanceWhenNothingWasRemoved(
                     currentJson,
                     workingDifferences.Length > 0 ||
-                    eventRemovedItems.Count > 0) == true;
+                    activeEventRemovals.Count > 0) == true;
             if (workingSnapshotAdvanced) {
                 if (primaryBaselineFollowsInMemory) {
                     baselineJson = inMemoryBaseline!.Json;
@@ -399,13 +402,19 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
                 ?? throw new InvalidOperationException(
                     "N.I.N.A. could not read the recovery baseline.");
             var currentRoot = sequenceViewModel.Sequencer.MainContainer;
+            // The current JSON is the bridge between fingerprinted baseline
+            // identities and N.I.N.A.'s live object tree. Restore uses it to
+            // locate one unchanged destination parent and sibling position;
+            // it never reuses an old index across a changed tree.
+            var currentJson = Serialize(sequenceViewModel);
 
             suppressCollectionRefresh = true;
             try {
                 SequenceJsonRestore.RestoreRemovedItem(
                     currentRoot,
                     baselineRoot,
-                    difference);
+                    difference,
+                    currentJson);
 
                 // Publishing the changed root asks N.I.N.A. to redraw its
                 // visible Advanced Sequencer with the inserted instruction or
@@ -443,7 +452,7 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
                     MaximumRemovedItems);
             var remainingRecoveries = MergeRemovedItems(
                 remainingWorkingDifferences,
-                eventRemovedItems.Values,
+                GetMissingEventRemovals(restoredJson),
                 MaximumRemovedItems);
             if (remainingRecoveries.Count == 0) {
                 inMemoryBaseline = new InMemorySequenceBaseline(restoredJson);
@@ -694,28 +703,88 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
     }
 
     /// <summary>
+    /// Retains event-only recovery candidates only while their exact baseline
+    /// item is absent from the current sequence. N.I.N.A. can implement a move
+    /// as a Remove followed by a fresh insertion, sometimes with a cloned
+    /// object. The collection reference then cannot cancel the old event, but
+    /// the fingerprint proves that the instruction or block was not deleted.
+    /// </summary>
+    private IReadOnlyList<SequenceDifference> GetMissingEventRemovals(
+        string currentJson) {
+        var currentTree = JToken.Parse(currentJson) as JObject
+            ?? throw new InvalidOperationException(
+                "N.I.N.A. did not serialize the current sequence as an object.");
+        var currentIdentities = currentTree
+            .DescendantsAndSelf()
+            .OfType<JObject>()
+            .Where(IsSequencerItemOrContainer)
+            .Select(SequenceJsonDiffer.CreateItemIdentity)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var pair in eventRemovedItems
+                     .Where(pair => !string.IsNullOrWhiteSpace(
+                             pair.Value.SourceIdentity)
+                         && currentIdentities.Contains(
+                             pair.Value.SourceIdentity))
+                     .ToArray()) {
+            // The item is present again, so this was a move or a reinserted
+            // equivalent. Keeping the event would create a false Restore row.
+            eventRemovedItems.Remove(pair.Key);
+        }
+
+        return eventRemovedItems.Values.ToArray();
+    }
+
+    // Keep the event filter in step with the differ's whole-item scope. JSON
+    // helper objects must never make a stale removal event look resolved.
+    private static bool IsSequencerItemOrContainer(JObject item) =>
+        item["$type"]?.Value<string>()?.Contains(
+            ".SequenceItem.",
+            StringComparison.Ordinal) == true
+        || SequenceJsonDiffer.IsSequenceContainer(item);
+
+    /// <summary>
     /// Combines removals from the fixed baseline and working snapshot without
-    /// showing a duplicate row for the same original location. The fixed
-    /// baseline wins because it represents an explicitly loaded or chosen
-    /// sequence state.
+    /// showing duplicate rows or child rows beneath a removed container. The
+    /// fixed baseline wins because it represents an explicitly loaded or
+    /// chosen sequence state.
     /// </summary>
     private static IReadOnlyList<SequenceDifference> MergeRemovedItems(
         IEnumerable<SequenceDifference> primaryDifferences,
         IEnumerable<SequenceDifference> workingDifferences,
         int maximumItems) {
         var combined = primaryDifferences.ToList();
-        var knownPaths = new HashSet<string>(
-            combined.Select(difference => difference.Path),
-            StringComparer.Ordinal);
-
         foreach (var difference in workingDifferences) {
-            if (knownPaths.Add(difference.Path)) {
-                combined.Add(difference);
+            // Deleting a container can also raise child collection events as
+            // N.I.N.A. tears down its object tree. The complete container is
+            // the recoverable unit, so never add a misleading child row when
+            // a row already represents one of its removed ancestors.
+            if (combined.Any(existing => IsSameOrAncestorPath(
+                    existing.Path,
+                    difference.Path))) {
+                continue;
             }
+
+            // Prefer a newly discovered enclosing block over an earlier
+            // fallback child. That keeps Restore focused on the object the
+            // person actually removed, not one instruction it contained.
+            combined.RemoveAll(existing => IsSameOrAncestorPath(
+                difference.Path,
+                existing.Path));
+            combined.Add(difference);
         }
 
         return combined.Take(maximumItems).ToArray();
     }
+
+    // JSON paths use one Items/$values step for every nesting level. The
+    // additional separator prevents '$... [1]' from matching an unrelated
+    // sibling such as '$... [10]'.
+    private static bool IsSameOrAncestorPath(string candidate, string path) =>
+        string.Equals(candidate, path, StringComparison.Ordinal)
+        || path.StartsWith(
+            candidate + ".Items['$values'][",
+            StringComparison.Ordinal);
 
     /// <summary>
     /// Finds N.I.N.A.'s editable Advanced Sequencer view model. The public
@@ -791,9 +860,10 @@ public sealed class SequenceDiffDockableVM : DockableVM, IDisposable {
 
             difference.ChangedAt = changedAt;
 
-            // Only an actual deleted sequencer item receives a Restore command.
-            // Added or changed values cannot become actionable by accident.
-            if (!string.IsNullOrWhiteSpace(difference.BeforeJson)) {
+            // A row is actionable only when its complete source and destination
+            // identities are unique. A disabled Restore button is safer than
+            // letting a repeated name or duplicate block select arbitrarily.
+            if (difference.HasSafeRestoreIdentity) {
                 difference.RestoreCommand = new DelegateCommand(
                     _ => RestoreRemovedItem(difference));
             }

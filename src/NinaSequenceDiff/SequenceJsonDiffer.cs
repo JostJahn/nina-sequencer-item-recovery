@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace NinaSequenceDiff;
@@ -230,88 +231,118 @@ public static class SequenceJsonDiffer {
         ICollection<SequenceDifference> differences,
         int limit,
         Func<SequenceDifference, bool> includeDifference) {
-        // First find the sequence of entries that stayed in the same relative
-        // order. Everything between two matches is an insertion or removal.
-        var keysBefore = before.Select(EntityKey).ToArray();
-        var keysAfter = after.Select(EntityKey).ToArray();
-        var matches = LongestCommonSubsequence(keysBefore, keysAfter);
-        var beforeIndex = 0;
-        var afterIndex = 0;
-
-        foreach (var match in matches) {
-            // Baseline entries before the next match disappeared.
-            while (beforeIndex < match.BeforeIndex && differences.Count < limit) {
-                Add(differences, limit, SequenceDifferenceKind.Removed, AppendIndex(path, beforeIndex), before[beforeIndex], null, GetSequenceInstruction(before[beforeIndex] as JObject), includeDifference);
-                beforeIndex++;
+        // Pair matching entities by identity, without treating their visual
+        // order as identity. N.I.N.A.'s move buttons reorder the same live
+        // objects, so an order-sensitive comparison would incorrectly label
+        // blocks moved up or down as deleted and added again.
+        var keysBefore = CreateMatchingKeys(before, after, before).ToArray();
+        var keysAfter = CreateMatchingKeys(before, after, after).ToArray();
+        var currentIndicesByKey = new Dictionary<string, Queue<int>>(
+            StringComparer.Ordinal);
+        for (var afterIndex = 0; afterIndex < keysAfter.Length; afterIndex++) {
+            if (!currentIndicesByKey.TryGetValue(
+                    keysAfter[afterIndex],
+                    out var indices)) {
+                indices = new Queue<int>();
+                currentIndicesByKey.Add(keysAfter[afterIndex], indices);
             }
 
-            // Current entries before the next match were newly added.
-            while (afterIndex < match.AfterIndex && differences.Count < limit) {
-                Add(differences, limit, SequenceDifferenceKind.Added, AppendIndex(path, afterIndex), null, after[afterIndex], GetSequenceInstruction(after[afterIndex] as JObject), includeDifference);
-                afterIndex++;
+            indices.Enqueue(afterIndex);
+        }
+
+        var matchedCurrentIndices = new HashSet<int>();
+        for (var beforeIndex = 0;
+             beforeIndex < keysBefore.Length && differences.Count < limit;
+             beforeIndex++) {
+            if (!currentIndicesByKey.TryGetValue(
+                    keysBefore[beforeIndex],
+                    out var matches)
+                || matches.Count == 0) {
+                Add(
+                    differences,
+                    limit,
+                    SequenceDifferenceKind.Removed,
+                    AppendIndex(path, beforeIndex),
+                    before[beforeIndex],
+                    null,
+                    GetSequenceInstruction(before[beforeIndex] as JObject),
+                    includeDifference);
+                continue;
             }
 
-            if (differences.Count >= limit) {
-                return;
-            }
-
+            var afterIndex = matches.Dequeue();
+            matchedCurrentIndices.Add(afterIndex);
             // The matched item can still have changed settings, so compare its
-            // contents as well. The visible recovery filter drops those edits.
-            CompareToken(before[beforeIndex], after[afterIndex], AppendIndex(path, afterIndex), GetSequenceInstruction(after[afterIndex] as JObject), differences, limit, includeDifference);
-            beforeIndex++;
-            afterIndex++;
+            // contents as well. Keep the baseline index in the path: it is
+            // the only tree that still contains a later deleted child. The
+            // current tree is located by parent and sibling identities during
+            // Restore, never by this old numeric location.
+            CompareToken(
+                before[beforeIndex],
+                after[afterIndex],
+                AppendIndex(path, beforeIndex),
+                GetSequenceInstruction(after[afterIndex] as JObject),
+                differences,
+                limit,
+                includeDifference);
         }
 
-        while (beforeIndex < before.Count && differences.Count < limit) {
-            Add(differences, limit, SequenceDifferenceKind.Removed, AppendIndex(path, beforeIndex), before[beforeIndex], null, GetSequenceInstruction(before[beforeIndex] as JObject), includeDifference);
-            beforeIndex++;
-        }
-
-        while (afterIndex < after.Count && differences.Count < limit) {
-            Add(differences, limit, SequenceDifferenceKind.Added, AppendIndex(path, afterIndex), null, after[afterIndex], GetSequenceInstruction(after[afterIndex] as JObject), includeDifference);
-            afterIndex++;
-        }
-    }
-
-    private static IReadOnlyList<(int BeforeIndex, int AfterIndex)> LongestCommonSubsequence(IReadOnlyList<string> before, IReadOnlyList<string> after) {
-        // Dynamic-programming table: each cell says how many matching entries
-        // remain if we start at one pair of positions. It makes row deletions
-        // stable without relying on N.I.N.A.'s transient JSON reference IDs.
-        var lengths = new int[before.Count + 1, after.Count + 1];
-        for (var beforeIndex = before.Count - 1; beforeIndex >= 0; beforeIndex--) {
-            for (var afterIndex = after.Count - 1; afterIndex >= 0; afterIndex--) {
-                lengths[beforeIndex, afterIndex] = before[beforeIndex] == after[afterIndex]
-                    ? lengths[beforeIndex + 1, afterIndex + 1] + 1
-                    : Math.Max(lengths[beforeIndex + 1, afterIndex], lengths[beforeIndex, afterIndex + 1]);
+        for (var afterIndex = 0;
+             afterIndex < after.Count && differences.Count < limit;
+             afterIndex++) {
+            if (!matchedCurrentIndices.Contains(afterIndex)) {
+                Add(
+                    differences,
+                    limit,
+                    SequenceDifferenceKind.Added,
+                    AppendIndex(path, afterIndex),
+                    null,
+                    after[afterIndex],
+                    GetSequenceInstruction(after[afterIndex] as JObject),
+                    includeDifference);
             }
         }
-
-        // Walk the finished table from the beginning to recover the actual
-        // matching index pairs, not just their number.
-        var matches = new List<(int BeforeIndex, int AfterIndex)>();
-        var left = 0;
-        var right = 0;
-        while (left < before.Count && right < after.Count) {
-            if (before[left] == after[right]) {
-                matches.Add((left++, right++));
-            } else if (lengths[left + 1, right] >= lengths[left, right + 1]) {
-                left++;
-            } else {
-                right++;
-            }
-        }
-
-        return matches;
     }
 
     // A typed object is N.I.N.A.'s normal representation for sequence entities.
     // Untyped arrays instead use the simpler positional comparison above.
     private static bool IsSequenceEntityArray(JArray array) => array.All(token => token is JObject entity && entity["$type"] is not null);
 
-    private static string EntityKey(JToken token) {
+    private static IEnumerable<string> CreateMatchingKeys(
+        JArray before,
+        JArray after,
+        JArray source) {
+        // A single item with the same type and visible name may have edited
+        // settings, so it must still align and report a property change. If a
+        // name occurs more than once, that short key is unsafe: use a complete
+        // content fingerprint to distinguish, for example, five- and
+        // ten-second waits with the same displayed name.
+        var beforeCounts = before.OfType<JObject>()
+            .GroupBy(StableEntityKey)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Count(),
+                StringComparer.Ordinal);
+        var afterCounts = after.OfType<JObject>()
+            .GroupBy(StableEntityKey)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Count(),
+                StringComparer.Ordinal);
+
+        foreach (var token in source.OfType<JObject>()) {
+            var stableKey = StableEntityKey(token);
+            var repeatsBefore = beforeCounts.GetValueOrDefault(stableKey) > 1;
+            var repeatsAfter = afterCounts.GetValueOrDefault(stableKey) > 1;
+            yield return !repeatsBefore && !repeatsAfter
+                ? stableKey
+                : stableKey + "\u001f" + CreateItemIdentity(token);
+        }
+    }
+
+    private static string StableEntityKey(JObject entity) {
         // Prefer names users recognise. If an item has no name, its type still
         // separates it from a different kind of sequencer object.
-        var entity = (JObject)token;
         var type = entity["$type"]?.Value<string>() ?? string.Empty;
         var name = entity["Name"]?.Value<string>()
             ?? entity["TargetName"]?.Value<string>()
@@ -343,8 +374,44 @@ public static class SequenceJsonDiffer {
         // model. A removed property, condition setting or JSON helper object is
         // never marked as recoverable.
         var removedSequencerItem = kind == SequenceDifferenceKind.Removed && IsSequencerItem(before as JObject);
-        var instructionText = removedSequencerItem ? beforeInstruction ?? string.Empty : string.Empty;
-        var instructionDetails = removedSequencerItem ? DescribeInstructionDetails((JObject)before!) : string.Empty;
+        var instructionText = removedSequencerItem
+            ? beforeInstruction ?? string.Empty
+            : string.Empty;
+        var sourceItem = removedSequencerItem ? (JObject)before! : null;
+        var sourceIdentity = sourceItem is null
+            ? null
+            : CreateItemIdentity(sourceItem);
+        var parent = sourceItem is null
+            ? null
+            : FindOwningContainer(sourceItem);
+        var destinationParentIdentity = parent is null
+            ? null
+            : CreateContainerIdentity(parent);
+        var siblings = sourceItem is null
+            ? null
+            : FindOwningItemArray(sourceItem);
+        var sourceIdentityIsUnique = sourceItem is not null
+            && siblings is not null
+            && siblings.OfType<JObject>()
+                .Count(item => CreateItemIdentity(item) == sourceIdentity) == 1;
+        var (previousSiblingIdentity, nextSiblingIdentity) = sourceItem is null
+            ? (null, null)
+            : GetSiblingIdentities(sourceItem);
+        var instructionDetails = removedSequencerItem
+            ? DescribeInstructionDetails(sourceItem!)
+            : string.Empty;
+        if (removedSequencerItem && !sourceIdentityIsUnique) {
+            instructionDetails = AppendSafetyDetail(
+                instructionDetails,
+                "Automatic restore is unavailable because identical items " +
+                "cannot be distinguished safely.");
+        } else if (removedSequencerItem
+                   && string.IsNullOrWhiteSpace(destinationParentIdentity)) {
+            instructionDetails = AppendSafetyDetail(
+                instructionDetails,
+                "Automatic restore is unavailable because the original " +
+                "parent cannot be identified safely.");
+        }
         var difference = new SequenceDifference(
             kind,
             path,
@@ -357,12 +424,110 @@ public static class SequenceJsonDiffer {
             after?.ToString(Formatting.None),
             removedSequencerItem,
             instructionText,
-            instructionDetails);
+            instructionDetails,
+            sourceIdentity,
+            destinationParentIdentity,
+            previousSiblingIdentity,
+            nextSiblingIdentity,
+            sourceIdentityIsUnique);
 
         if (includeDifference(difference)) {
             differences.Add(difference);
         }
     }
+
+    // Full item fingerprints retain meaningful settings but remove temporary
+    // serializer references. They are used only as internal safety evidence.
+    internal static string CreateItemIdentity(JObject item) =>
+        CreateIdentity(item, excludeChildCollections: false);
+
+    // A destination block changes when a child is deleted. Its identity must
+    // therefore exclude child collections while retaining type, name and the
+    // block's own settings.
+    internal static string CreateContainerIdentity(JObject container) =>
+        CreateIdentity(container, excludeChildCollections: true);
+
+    internal static bool IsSequenceContainer(JObject? value) =>
+        value?["$type"]?.Value<string>()?.Contains(
+            ".Container.",
+            StringComparison.Ordinal) == true;
+
+    private static string CreateIdentity(
+        JToken token,
+        bool excludeChildCollections) {
+        var canonical = CanonicalizeIdentityToken(token, excludeChildCollections);
+        var bytes = Encoding.UTF8.GetBytes(canonical.ToString(Formatting.None));
+        return Convert.ToHexString(SHA256.HashData(bytes));
+    }
+
+    private static JToken CanonicalizeIdentityToken(
+        JToken token,
+        bool excludeChildCollections) => token switch {
+            JObject objectToken => new JObject(
+                objectToken.Properties()
+                    .Where(property => !IsIgnoredIdentityProperty(
+                        property.Name,
+                        excludeChildCollections))
+                    .OrderBy(property => property.Name, StringComparer.Ordinal)
+                    .Select(property => new JProperty(
+                        property.Name,
+                        CanonicalizeIdentityToken(
+                            property.Value,
+                            excludeChildCollections)))),
+            JArray arrayToken => new JArray(arrayToken.Select(value =>
+                CanonicalizeIdentityToken(value, excludeChildCollections))),
+            _ => token.DeepClone()
+        };
+
+    private static bool IsIgnoredIdentityProperty(
+        string name,
+        bool excludeChildCollections) =>
+        name is "$id" or "$ref" or "Parent"
+        || IgnoredPropertyNames.Contains(name)
+        || (excludeChildCollections
+            && name is "Items" or "Conditions" or "Triggers");
+
+    private static JObject? FindOwningContainer(JToken item) =>
+        item.Ancestors().OfType<JObject>().FirstOrDefault(IsSequenceContainer);
+
+    private static JArray? FindOwningItemArray(JToken item) =>
+        item.Parent as JArray;
+
+    private static (string? Previous, string? Next) GetSiblingIdentities(
+        JObject item) {
+        var siblings = FindOwningItemArray(item);
+        var index = siblings?.IndexOf(item) ?? -1;
+        if (siblings is null || index < 0) {
+            return (null, null);
+        }
+
+        string? previous = null;
+        for (var siblingIndex = index - 1;
+             siblingIndex >= 0 && previous is null;
+             siblingIndex--) {
+            if (siblings[siblingIndex] is JObject sibling
+                && IsSequencerItem(sibling)) {
+                previous = CreateItemIdentity(sibling);
+            }
+        }
+
+        string? next = null;
+        for (var siblingIndex = index + 1;
+             siblingIndex < siblings.Count && next is null;
+             siblingIndex++) {
+            if (siblings[siblingIndex] is JObject sibling
+                && IsSequencerItem(sibling)) {
+                next = CreateItemIdentity(sibling);
+            }
+        }
+
+        return (previous, next);
+    }
+
+    private static string AppendSafetyDetail(string details, string notice) =>
+        string.IsNullOrWhiteSpace(details)
+            ? notice
+            : details + " · " + notice;
 
     // Extends the internal path to one object property. JSONPath allows simple
     // property names after a dot; punctuation needs the quoted bracket form.

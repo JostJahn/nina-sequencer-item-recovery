@@ -15,8 +15,8 @@ using System.Runtime.CompilerServices;
 // This GUID is the permanent technical identity of the plugin. N.I.N.A. uses
 // it to recognise upgrades and uninstallations, so never generate a new one.
 [assembly: Guid("3c52a960-96a7-41a6-a06a-4aa54f4c0df9")]
-[assembly: AssemblyVersion("0.1.11.0")]
-[assembly: AssemblyFileVersion("0.1.11.0")]
+[assembly: AssemblyVersion("0.1.12.0")]
+[assembly: AssemblyFileVersion("0.1.12.0")]
 // N.I.N.A.'s plugin manager reads the following metadata when a manifest is
 // generated. Keep this URL on the public source repository, not a local path.
 [assembly: AssemblyMetadata("MinimumApplicationVersion", "3.2.0.9001")]
