@@ -1,7 +1,7 @@
 # Sequencer Item Recovery — publication checklist
 
-Status: public source repository and GitHub Release `v0.1.11.0` published;
-release `v0.1.12.0` approved and ready to publish.
+Status: public source repository and GitHub Releases `v0.1.11.0` and
+`v0.1.12.0` published.
 The N.I.N.A. manifest was submitted in pull request `#690` and is awaiting
 the repository maintainers' workflow approval and review.
 
@@ -30,6 +30,8 @@ Local Git repository: branch `main`. Public remote:
 - Human review record: `release/HUMAN-REVIEW-RECORD.md`.
 - Published release:
   `https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.11.0`.
+- Current published release:
+  `https://github.com/JostJahn/nina-sequencer-item-recovery/releases/tag/v0.1.12.0`.
 - Published ZIP SHA-256:
   `923F9AFDE3D2CC5F19CD981088EA3A0B6FF395AFE093901FDE5E541923F75A64`.
 - Approved 0.1.12.0 ZIP SHA-256:
@@ -81,9 +83,12 @@ Local Git repository: branch `main`. Public remote:
   restored, and a distinct three-item block is restored as one block.
 - [x] Jost Jahn explicitly approved public publication of version 0.1.12.0 on
   2026-09-19.
-- [ ] Create immutable tag `v0.1.12.0`, publish its GitHub Release, and verify
-  the externally downloaded ZIP checksum.
-- [ ] Upload the validated 0.1.12.0 website files and verify their public URLs.
+- [x] Immutable tag `v0.1.12.0` and GitHub Release published. The external ZIP
+  download was verified byte for byte against the approved checksum on
+  2026-09-19.
+- [x] The validated 0.1.12.0 website files were published by the bound SFTP
+  profile. HTTPS SHA-256 checks confirmed all ten changed public files on
+  2026-09-19.
 
 ## Required human release check
 

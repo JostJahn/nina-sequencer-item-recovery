@@ -1,6 +1,6 @@
-# Sequencer Item Recovery 0.1.12.0 — draft release notes
+# Sequencer Item Recovery 0.1.12.0 — release notes
 
-Status: approved for publication; GitHub Release creation pending.
+Status: published GitHub Release `v0.1.12.0` on 2026-09-19.
 
 ## Highlights
 
