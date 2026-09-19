@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sequencer Item Recovery for N.I.N.A. — Detailed guide</title>
-  <link rel="icon" href="assets/recycle-mark.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/my-nina-plugins-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body data-page="detailed-guide">
@@ -19,7 +19,7 @@
       </section>
       <section class="panel">
         <h2>1. The problem Sequencer Item Recovery solves</h2>
-        <p>An Advanced Sequencer is a tree: it can contain individual instructions such as an exposure, a dither or a wait; it can also contain larger blocks that hold several instructions. Deleting one row can therefore remove more than expected. Sequencer Item Recovery keeps the version that was loaded when the sequence was opened as a comparison baseline. It then watches the currently edited tree about once per second.</p>
+        <p>An Advanced Sequencer is a tree: it can contain individual instructions such as an exposure, a dither or a wait; it can also contain larger blocks that hold several instructions. Deleting one row can therefore remove more than expected. Sequencer Item Recovery keeps the last loaded sequence, or a working in-memory snapshot for a new unsaved sequence, as a comparison baseline. It then watches the currently edited tree about once per second.</p>
         <p>When a complete instruction or block disappears, Sequencer Item Recovery records it in its own list. It does not change the sequence by itself. That is why it can be used as a recovery aid without silently undoing intentional work.</p>
       </section>
       <section class="panel">
@@ -33,7 +33,7 @@
       </section>
       <section class="panel">
         <h2>3. Read the panel</h2>
-        <table class="comparison">
+        <table class="comparison" data-sortable>
           <thead><tr><th title="The local time at which Sequencer Item Recovery first detected this deletion; newest entries are shown first by default.">Column</th><th title="How to use the information in this column.">Meaning</th></tr></thead>
           <tbody>
             <tr><td>Removed at</td><td>The local date and time when Sequencer Item Recovery first saw the item missing, shown as <code>yyyy-MM-dd HH:mm:ss</code>.</td></tr>

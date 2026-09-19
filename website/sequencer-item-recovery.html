@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sequencer Item Recovery for N.I.N.A. Advanced Sequencer deletions.">
+  <title>Sequencer Item Recovery — My N.I.N.A. Plugins</title>
+  <link rel="icon" href="assets/my-nina-plugins-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-page="recovery">
+  <header id="site-header"></header>
+  <div class="page-layout">
+    <aside class="sidebar"><nav id="site-nav" aria-label="Site navigation"></nav></aside>
+    <main class="content">
+      <section class="hero">
+        <p class="eyebrow">Advanced Sequencer recovery tool</p>
+        <h1>Sequencer Item Recovery</h1>
+        <p class="lead">A short-term safety net for an instruction or block
+          accidentally deleted from an open N.I.N.A. Advanced Sequencer.</p>
+      </section>
+      <section class="grid">
+        <article class="download-card">
+          <h2>0.1.12.0 candidate</h2>
+          <p>Windows · N.I.N.A. 3.2.0.9001 or newer · local release candidate</p>
+          <p><a class="download-button" href="downloads/SequencerItemRecovery-0.1.12.0.zip" download>Download candidate ZIP</a></p>
+          <p class="notice">This candidate is not yet a published GitHub
+            release. See <a href="versions.html">Versions</a> for its checksum
+            and for the still-published 0.1.11.0 package.</p>
+          <p><a href="install.html">Read the installation instructions</a></p>
+        </article>
+        <article class="panel">
+          <h2>Original source</h2>
+          <p>The complete original source, release history and issue tracker are
+            on <a href="https://github.com/JostJahn/nina-sequencer-item-recovery">GitHub</a>.</p>
+          <p>License: <a href="https://www.mozilla.org/MPL/2.0/">Mozilla Public License 2.0</a>.</p>
+        </article>
+      </section>
+      <section class="panel">
+        <h2>What it does</h2>
+        <p>When an instruction or complete block disappears from the sequence
+          currently being edited, the plugin records a readable recovery row.
+          It shows the time of detection and an instruction description using
+          the same kind of wording and settings seen in the Sequencer, rather
+          than internal JSON names. Select <strong>'Restore'</strong> to insert
+          the complete missing item at its original position.</p>
+        <p>The normal workflow is deliberately narrow: notice a deletion, check
+          the row, restore the intended item, inspect it in the Sequencer, then
+          save the sequence normally if the repair must be kept on disk.</p>
+      </section>
+      <section class="panel">
+        <h2>What it does not do</h2>
+        <p>This is not a full undo history, a general JSON editor, an automatic
+          backup system or a replacement for saving sequence versions. It lists
+          removed instructions and blocks only. It does not silently reverse
+          additions, property changes, conditions or triggers.</p>
+      </section>
+      <section class="panel">
+        <h2>Safe use during an imaging run</h2>
+        <p>Use N.I.N.A.'s lower-right <strong>'Pause'</strong> control first;
+          do not cancel or abort the sequence. Once N.I.N.A. is visibly paused,
+          use <strong>'Restore'</strong>, confirm the safety message, inspect
+          the restored item, then resume N.I.N.A. The plugin never guesses the
+          physical state of an imaging run.</p>
+        <p><a href="detailed-guide.html">Read the detailed recovery guide</a>.</p>
+      </section>
+      <section class="panel">
+        <h2>Where to find it in N.I.N.A.</h2>
+        <p>After installation, confirm the entry under <code>Options → Plugins
+          → Installed</code>. The tool itself is opened from the
+          <code>Imaging</code> workspace using its four-square icon in the Tools
+          group. Closing the panel does not remove that icon.</p>
+      </section>
+    </main>
+  </div>
+  <footer id="site-footer"></footer>
+  <script src="assets/site.js"></script>
+</body>
+</html>

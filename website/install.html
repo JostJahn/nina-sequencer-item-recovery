@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Manual installation instructions for Sequencer Item Recovery.">
+  <title>Install Sequencer Item Recovery — My N.I.N.A. Plugins</title>
+  <link rel="icon" href="assets/my-nina-plugins-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-page="install">
+  <header id="site-header"></header>
+  <div class="page-layout">
+    <aside class="sidebar"><nav id="site-nav" aria-label="Site navigation"></nav></aside>
+    <main class="content">
+      <section class="hero">
+        <p class="eyebrow">Manual installation</p>
+        <h1>Install the ZIP package in N.I.N.A.</h1>
+        <p class="lead">The package contains one plugin DLL. It is not a
+          standalone application and does not have its own installer.</p>
+      </section>
+      <section class="panel">
+        <h2>Before you start</h2>
+        <p>Use N.I.N.A. 3.2.0.9001 or newer on Windows. Fully close N.I.N.A.
+          before replacing a plugin DLL. Do not extract the file while N.I.N.A.
+          is running.</p>
+      </section>
+      <section class="panel">
+        <h2>Installation steps</h2>
+        <ol class="steps">
+          <li><strong>Download the candidate package.</strong><p>Download
+            <a href="downloads/SequencerItemRecovery-0.1.12.0.zip" download>SequencerItemRecovery-0.1.12.0.zip</a>
+            from this page. The current candidate is not yet a published GitHub
+            release.</p></li>
+          <li><strong>Verify the download.</strong><p>Compare the ZIP file's
+            SHA-256 with the value on the <a href="versions.html">Versions
+            page</a>. This confirms that the file was not changed in transit.</p></li>
+          <li><strong>Create or open the plugin folder.</strong><p>In Windows
+            File Explorer, enter this path in the address bar:</p><p class="path-box"><code>%LOCALAPPDATA%\NINA\Plugins\3.0.0\SequencerItemRecovery\</code></p></li>
+          <li><strong>Extract the ZIP there.</strong><p>The result must be
+            <code>SequencerItemRecovery.dll</code> directly inside that folder,
+            not inside an extra nested folder.</p></li>
+          <li><strong>Start N.I.N.A. again.</strong><p>Open <code>Options →
+            Plugins → Installed</code> and check that Sequencer Item Recovery
+            displays version <code>0.1.12.0</code>.</p></li>
+        </ol>
+      </section>
+      <section class="panel">
+        <h2>Open the tool</h2>
+        <p>Open or create an Advanced Sequencer sequence, switch to
+          <code>Imaging</code>, then select the four-square Sequencer Item
+          Recovery icon in the upper-right Tools group.</p>
+      </section>
+      <section class="panel">
+        <h2>Earlier preview installation</h2>
+        <p>If you installed the older preview named Recycle, close N.I.N.A. and
+          remove its old <code>NinaSequenceDiff</code> plugin folder before
+          starting N.I.N.A. again. Keep only the current
+          <code>SequencerItemRecovery</code> folder so N.I.N.A. does not load
+          two versions of the same plugin.</p>
+      </section>
+    </main>
+  </div>
+  <footer id="site-footer"></footer>
+  <script src="assets/site.js"></script>
+</body>
+</html>

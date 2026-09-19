@@ -64,6 +64,13 @@ p { margin: 0 0 1rem; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
 .download-card { border: 1px solid #4e92b4; border-radius: .85rem; background: #0d3347; padding: 1.2rem; }
 .download-card .download-button { display: inline-block; margin: .25rem 0 .85rem; }
+.product-card { border: 1px solid #4e92b4; border-radius: .9rem; background: #0d3347; display: grid; gap: 1rem; grid-template-columns: 4.4rem minmax(0, 1fr); padding: 1.2rem; }
+.product-card img { height: 4.4rem; width: 4.4rem; }
+.product-card h2 { margin-bottom: .35rem; }
+.badge { background: #174e68; border: 1px solid #4e92b4; border-radius: 999px; color: #d9f2ff; display: inline-block; font-size: .78rem; font-weight: 700; padding: .12rem .5rem; }
+.link-list { margin: 0; padding-left: 1.25rem; }
+.link-list li { margin: .35rem 0; }
+.path-box { background: #071923; border: 1px solid var(--border); border-radius: .45rem; padding: .65rem .75rem; }
 .meta { color: var(--muted); font-size: .92rem; }
 .hash { color: #d9effb; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; overflow-wrap: anywhere; }
 .notice { border-left: .28rem solid var(--warning); color: #f5e5c6; padding-left: .85rem; }
@@ -73,7 +80,8 @@ p { margin: 0 0 1rem; }
 .steps > li > p:last-child { margin-bottom: 0; }
 .comparison { border-collapse: collapse; margin: .75rem 0; max-width: 100%; width: auto; }
 .comparison th, .comparison td { border: 1px solid var(--border); padding: .45rem .6rem; text-align: left; vertical-align: top; }
-.comparison th { background: var(--surface-2); }
+.comparison th { background: var(--surface-2); cursor: pointer; }
+.comparison th:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .footer { border-top: 1px solid var(--border); color: var(--muted); font-size: .88rem; padding: 1.4rem 1rem 2.5rem; }
 .footer-inner { margin: 0 auto; max-width: var(--max-width); }
 .footer p { margin: 0; }
@@ -87,6 +95,6 @@ p { margin: 0 0 1rem; }
   .sidebar { margin-bottom: 1rem; position: static; }
   .sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sidebar-collapsed .page-layout { display: block; }
-  .sidebar-collapsed .sidebar a span { display: inline; }
-  .sidebar-collapsed .sidebar a .nav-short { display: none; }
+  .sidebar-collapsed .sidebar { display: none; }
+  .product-card { grid-template-columns: 1fr; }
 }
